@@ -9,6 +9,8 @@ import type {
   TeamCalendarResponse,
 } from '../lib/types';
 
+type CalView = 'week' | 'month';
+
 function apiBase(): string {
   return (
     process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ||
@@ -24,6 +26,25 @@ function localDateKey(d: Date) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
+function parseLocalDate(key: string): Date {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function addDays(d: Date, n: number) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
+
+/** Monday of the week containing `d` */
+function startOfWeek(d: Date) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const pad = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - pad);
+  return x;
+}
+
 function monthBounds(year: number, monthIndex: number) {
   const last = new Date(year, monthIndex + 1, 0).getDate();
   return {
@@ -32,8 +53,20 @@ function monthBounds(year: number, monthIndex: number) {
   };
 }
 
+function weekBounds(weekStart: Date) {
+  const end = addDays(weekStart, 6);
+  return { from: localDateKey(weekStart), to: localDateKey(end) };
+}
+
 function dayKey(iso: string): string {
   return iso.slice(0, 10);
+}
+
+function formatTime(iso: string, allDay: boolean) {
+  if (allDay) return 'Todo el día';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -50,8 +83,10 @@ export function TeamCalendarView({
   const now = new Date();
   const todayKey = localDateKey(now);
 
+  const [view, setView] = useState<CalView>('week');
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(now));
   const [selectedDay, setSelectedDay] = useState(todayKey);
   const [layerDsp, setLayerDsp] = useState(true);
   const [layerOutlook, setLayerOutlook] = useState(outlookConfigured);
@@ -63,7 +98,10 @@ export function TeamCalendarView({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { from, to } = useMemo(() => monthBounds(year, month), [year, month]);
+  const { from, to } = useMemo(() => {
+    if (view === 'week') return weekBounds(weekStart);
+    return monthBounds(year, month);
+  }, [view, weekStart, year, month]);
 
   const layers = useMemo(() => {
     const list: string[] = [];
@@ -116,7 +154,6 @@ export function TeamCalendarView({
   }, [load]);
 
   useEffect(() => {
-    // Keep selection inside the visible month
     if (selectedDay < from || selectedDay > to) {
       const preferToday = todayKey >= from && todayKey <= to;
       setSelectedDay(preferToday ? todayKey : from);
@@ -134,9 +171,15 @@ export function TeamCalendarView({
     return map;
   }, [events]);
 
+  const weekDays = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = addDays(weekStart, i);
+      return { key: localDateKey(d), date: d, label: WEEKDAYS[i] };
+    });
+  }, [weekStart]);
+
   const gridCells = useMemo(() => {
     const first = new Date(year, month, 1);
-    // Monday = 0 … Sunday = 6
     const startPad = (first.getDay() + 6) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const cells: Array<{ key: string; day: number | null }> = [];
@@ -155,27 +198,61 @@ export function TeamCalendarView({
 
   const selectedEvents = eventsByDay.get(selectedDay) ?? [];
 
-  const monthLabel = new Date(year, month, 1).toLocaleDateString('es-CL', {
-    month: 'long',
-    year: 'numeric',
-  });
+  const rangeLabel =
+    view === 'week'
+      ? (() => {
+          const a = weekStart.toLocaleDateString('es-CL', {
+            day: 'numeric',
+            month: 'short',
+          });
+          const b = addDays(weekStart, 6).toLocaleDateString('es-CL', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          });
+          return `${a} – ${b}`;
+        })()
+      : new Date(year, month, 1).toLocaleDateString('es-CL', {
+          month: 'long',
+          year: 'numeric',
+        });
 
-  const selectedDayLabel = new Date(`${selectedDay}T12:00:00`).toLocaleDateString(
+  const selectedDayLabel = parseLocalDate(selectedDay).toLocaleDateString(
     'es-CL',
     { weekday: 'long', day: 'numeric', month: 'long' },
   );
 
-  function shiftMonth(delta: number) {
-    const d = new Date(year, month + delta, 1);
-    setYear(d.getFullYear());
-    setMonth(d.getMonth());
+  function shift(delta: number) {
+    if (view === 'week') {
+      const next = addDays(weekStart, delta * 7);
+      setWeekStart(next);
+      setYear(next.getFullYear());
+      setMonth(next.getMonth());
+    } else {
+      const d = new Date(year, month + delta, 1);
+      setYear(d.getFullYear());
+      setMonth(d.getMonth());
+      setWeekStart(startOfWeek(d));
+    }
   }
 
   function goToday() {
     const n = new Date();
     setYear(n.getFullYear());
     setMonth(n.getMonth());
+    setWeekStart(startOfWeek(n));
     setSelectedDay(localDateKey(n));
+  }
+
+  function switchView(next: CalView) {
+    setView(next);
+    if (next === 'week') {
+      setWeekStart(startOfWeek(parseLocalDate(selectedDay)));
+    } else {
+      const d = parseLocalDate(selectedDay);
+      setYear(d.getFullYear());
+      setMonth(d.getMonth());
+    }
   }
 
   function togglePerson(personaId: string) {
@@ -183,6 +260,23 @@ export function TeamCalendarView({
       prev.includes(personaId)
         ? prev.filter((id) => id !== personaId)
         : [...prev, personaId],
+    );
+  }
+
+  function renderEventChip(ev: TeamCalendarEvent) {
+    return (
+      <button
+        key={ev.id}
+        type="button"
+        className={`dsp-cal__chip-ev dsp-cal__chip-ev--${ev.layer}`}
+        onClick={() => setSelectedDay(dayKey(ev.start))}
+        title={`${ev.title} · ${ev.displayName}`}
+      >
+        <span className="dsp-cal__chip-ev-time">
+          {formatTime(ev.start, ev.allDay)}
+        </span>
+        <span className="dsp-cal__chip-ev-title">{ev.title}</span>
+      </button>
     );
   }
 
@@ -203,24 +297,41 @@ export function TeamCalendarView({
               type="button"
               variant="outlined"
               size="sm"
-              onClick={() => shiftMonth(-1)}
-              aria-label="Mes anterior"
+              onClick={() => shift(-1)}
+              aria-label="Anterior"
             >
               ‹
             </Button>
-            <h2 className="dsp-cal__month">{monthLabel}</h2>
+            <h2 className="dsp-cal__month">{rangeLabel}</h2>
             <Button
               type="button"
               variant="outlined"
               size="sm"
-              onClick={() => shiftMonth(1)}
-              aria-label="Mes siguiente"
+              onClick={() => shift(1)}
+              aria-label="Siguiente"
             >
               ›
             </Button>
             <Button type="button" variant="text" size="sm" onClick={goToday}>
               Hoy
             </Button>
+          </div>
+
+          <div className="dsp-cal__view-toggle" role="group" aria-label="Vista">
+            <button
+              type="button"
+              className={`dsp-cal__view-btn${view === 'week' ? ' is-active' : ''}`}
+              onClick={() => switchView('week')}
+            >
+              Semana
+            </button>
+            <button
+              type="button"
+              className={`dsp-cal__view-btn${view === 'month' ? ' is-active' : ''}`}
+              onClick={() => switchView('month')}
+            >
+              Mes
+            </button>
           </div>
 
           <div className="dsp-cal__layers">
@@ -299,50 +410,88 @@ export function TeamCalendarView({
 
       <Card>
         <div className="dsp-cal__grid-wrap" aria-busy={loading}>
-          <div className="dsp-cal__weekdays">
-            {WEEKDAYS.map((w) => (
-              <div key={w} className="dsp-cal__weekday">
-                {w}
-              </div>
-            ))}
-          </div>
-          <div className="dsp-cal__grid">
-            {gridCells.map((cell) => {
-              if (cell.day === null) {
+          {view === 'week' ? (
+            <div className="dsp-cal__week">
+              {weekDays.map((day) => {
+                const dayEvents = eventsByDay.get(day.key) ?? [];
+                const isSelected = day.key === selectedDay;
+                const isToday = day.key === todayKey;
                 return (
-                  <div key={cell.key} className="dsp-cal__cell is-empty" />
+                  <div
+                    key={day.key}
+                    className={`dsp-cal__week-col${isSelected ? ' is-selected' : ''}${isToday ? ' is-today' : ''}`}
+                  >
+                    <button
+                      type="button"
+                      className="dsp-cal__week-head"
+                      onClick={() => setSelectedDay(day.key)}
+                    >
+                      <span className="dsp-cal__week-dow">{day.label}</span>
+                      <span className="dsp-cal__week-dom">
+                        {day.date.getDate()}
+                      </span>
+                    </button>
+                    <div className="dsp-cal__week-body">
+                      {dayEvents.length === 0 ? (
+                        <p className="dsp-cal__week-empty">—</p>
+                      ) : (
+                        dayEvents.map(renderEventChip)
+                      )}
+                    </div>
+                  </div>
                 );
-              }
-              const dayEvents = eventsByDay.get(cell.key) ?? [];
-              const dspCount = dayEvents.filter((e) => e.layer === 'dsp').length;
-              const outCount = dayEvents.filter(
-                (e) => e.layer === 'outlook',
-              ).length;
-              const isSelected = cell.key === selectedDay;
-              const isToday = cell.key === todayKey;
-              return (
-                <button
-                  key={cell.key}
-                  type="button"
-                  className={`dsp-cal__cell${isSelected ? ' is-selected' : ''}${isToday ? ' is-today' : ''}`}
-                  onClick={() => setSelectedDay(cell.key)}
-                >
-                  <span className="dsp-cal__daynum">{cell.day}</span>
-                  <span className="dsp-cal__marks" aria-hidden>
-                    {dspCount > 0 ? (
-                      <span className="dsp-cal__mark dsp-cal__mark--dsp" />
-                    ) : null}
-                    {outCount > 0 ? (
-                      <span className="dsp-cal__mark dsp-cal__mark--outlook" />
-                    ) : null}
-                  </span>
-                  {dayEvents.length > 0 ? (
-                    <span className="dsp-cal__count">{dayEvents.length}</span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
+              })}
+            </div>
+          ) : (
+            <>
+              <div className="dsp-cal__weekdays">
+                {WEEKDAYS.map((w) => (
+                  <div key={w} className="dsp-cal__weekday">
+                    {w}
+                  </div>
+                ))}
+              </div>
+              <div className="dsp-cal__grid">
+                {gridCells.map((cell) => {
+                  if (cell.day === null) {
+                    return (
+                      <div key={cell.key} className="dsp-cal__cell is-empty" />
+                    );
+                  }
+                  const dayEvents = eventsByDay.get(cell.key) ?? [];
+                  const dspCount = dayEvents.filter(
+                    (e) => e.layer === 'dsp',
+                  ).length;
+                  const outCount = dayEvents.filter(
+                    (e) => e.layer === 'outlook',
+                  ).length;
+                  const isSelected = cell.key === selectedDay;
+                  const isToday = cell.key === todayKey;
+                  return (
+                    <button
+                      key={cell.key}
+                      type="button"
+                      className={`dsp-cal__cell${isSelected ? ' is-selected' : ''}${isToday ? ' is-today' : ''}`}
+                      onClick={() => setSelectedDay(cell.key)}
+                    >
+                      <span className="dsp-cal__daynum">{cell.day}</span>
+                      <span className="dsp-cal__marks" aria-hidden>
+                        {dspCount > 0 ? (
+                          <span className="dsp-cal__mark dsp-cal__mark--dsp" />
+                        ) : null}
+                        {outCount > 0 ? (
+                          <span className="dsp-cal__mark dsp-cal__mark--outlook" />
+                        ) : null}
+                      </span>
+                      {dayEvents.length > 0 ? (
+                        <span className="dsp-cal__count">{dayEvents.length}</span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
           {loading ? (
             <p className="dsp-cal__loading">Actualizando eventos…</p>
           ) : null}
@@ -362,8 +511,8 @@ export function TeamCalendarView({
           <div className="dsp-cal__empty">
             <p>Sin eventos este día.</p>
             <p className="dsp-cal__muted">
-              La grilla ya está lista. Cuando asignes tareas con fechas (capa
-              DSP) o actives Outlook de equipo, aparecerán aquí.
+              Asigna tareas con fechas (DSP) o activa Outlook de equipo para
+              llenar la agenda.
             </p>
           </div>
         ) : (
@@ -376,7 +525,9 @@ export function TeamCalendarView({
                   >
                     {ev.layer === 'dsp' ? 'DSP' : 'Outlook'}
                   </span>
-                  <span className="dsp-cal__muted">{ev.displayName}</span>
+                  <span className="dsp-cal__muted">
+                    {formatTime(ev.start, ev.allDay)} · {ev.displayName}
+                  </span>
                 </div>
                 <strong className="dsp-cal__event-title">{ev.title}</strong>
                 {ev.location ? (

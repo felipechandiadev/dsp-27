@@ -28,11 +28,22 @@ Por separado: `npm run core:dev` · `npm run app:dev`
 
 ## Usuarios seed
 
+Un usuario por perfil de app (`users.role`). Catálogo: [`user-roles.ts`](./core/src/modules/users/domain/user-roles.ts) · [01-generalidades](./dev-docs/01-generalidades.md).
+
 | Username | Rol | Password (default) |
 |----------|-----|--------------------|
 | `direccion` | `direccion` | `direccion123` |
-| `gestor` | `gestor` | `gestor123` |
+| `analisis_datos` | `analisis_datos` | `analisis_datos123` |
+| `analisis_sistemas` | `analisis_sistemas` | `analisis_sistemas123` |
+| `administrativo` | `administrativo` | `administrativo123` |
+| `its` | `its` | `its123` |
 | `prevencion` | `prevencion` | `prevencion123` |
+| `gestor` | `gestor` | `gestor123` |
+| `jefe_operaciones` | `jefe_operaciones` | `jefe_operaciones123` |
+| `operador_televigilancia` | `operador_televigilancia` | `operador_televigilancia123` |
+| `inspector` | `inspector` | `inspector123` |
+| `jefe_grd` | `jefe_grd` | `jefe_grd123` |
+| `grd` | `grd` | `grd123` |
 
 Login por **username** (no email). Secretos solo en `envs/shared.env` / `.env` locales.
 

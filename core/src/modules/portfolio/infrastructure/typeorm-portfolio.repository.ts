@@ -20,8 +20,9 @@ export class TypeOrmPortfolioRepository implements PortfolioRepositoryPort {
     private readonly assignees: Repository<TaskAssignee>,
   ) {}
 
-  listProjects(): Promise<Project[]> {
+  listProjects(kind?: string): Promise<Project[]> {
     return this.projects.find({
+      where: kind ? { kind } : {},
       relations: ['strategicObjectives'],
       order: { code: 'ASC' },
     });
@@ -36,6 +37,13 @@ export class TypeOrmPortfolioRepository implements PortfolioRepositoryPort {
 
   findTaskById(taskId: string): Promise<Task | null> {
     return this.tasks.findOne({ where: { id: taskId } });
+  }
+
+  listTasks(): Promise<Task[]> {
+    return this.tasks.find({
+      relations: ['project'],
+      order: { sortOrder: 'ASC', code: 'ASC', title: 'ASC' },
+    });
   }
 
   listTasksByProjectId(projectId: string): Promise<Task[]> {

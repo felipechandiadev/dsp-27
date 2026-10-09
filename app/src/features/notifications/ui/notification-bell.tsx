@@ -75,7 +75,7 @@ export function NotificationBell() {
               )}
             </ul>
             <div className="dsp-notif__foot">
-              <Link href="/alerts" onClick={() => setOpen(false)}>
+              <Link href="/notifications" onClick={() => setOpen(false)}>
                 Ver todas
               </Link>
             </div>

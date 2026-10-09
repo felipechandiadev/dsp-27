@@ -21,7 +21,8 @@ export default async function LoginPage() {
         <LoginForm />
       </Card>
       <p className="dsp-meta">
-        Seed: <code>direccion</code> / <code>direccion123</code>
+        Seed: <code>direccion</code> / <code>direccion123</code> · más perfiles en el
+        README
       </p>
     </main>
   );

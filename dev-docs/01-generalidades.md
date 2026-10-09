@@ -79,22 +79,32 @@ El destino de las **nuevas** subidas es **uno**: disco local **o** Cloudflare R2
 
 Cada archivo tiene clase de reserva (art. 22°): uso interno, reservado de seguridad, o datos de personal. Las imágenes de televigilancia no entran aquí. Variables: [05-envs.md](./05-envs.md).
 
-## Roles
+## Roles de usuario (`users.role`)
 
-Siguen la orgánica objetivo de PRJ-1. El decreto puede no estar dictado todavía; la app igual usa estos roles como convención de trabajo.
+Perfiles de **acceso a la app**, alineados a la orgánica objetivo (PRJ-1 / Astro seguridad-2027). No confundir con:
 
-| Rol | Ve y hace |
-|-----|-----------|
-| `direccion` | Tablero, instrucciones de envío, Consejo, calidad de inspector, lectura de ITS |
-| `analisis_datos` | Cartera, indicadores, Plan Comunal, nómina consolidada, encuesta |
-| `analisis_sistemas` | Activos, especificaciones, recepción de compras TIC y radios |
-| `administrativo` | Expedientes, capacitaciones, credenciales, EPP, archivo |
-| `its` | Contratos, niveles de servicio, actas, incumplimientos |
-| `prevencion` | Sectores, rondas, programas, informes de visitas |
-| `gestor` | Bitácora, visitas, instrumento, orientación inicial |
-| `operaciones` | Lo instalado (Central, radios, alertas) y bitácora operativa |
+- **cargo / plaza** (Analista TIC, Gestor territorial…),
+- **unidad** (`staff.unit`: `direccion` \| `analisis` \| `prevencion` \| `operaciones` \| `grd`),
+- **perfil DS 97** (`fiscalizador` \| `coadyuvante` \| `no_operativo`).
 
-La coordinación de Análisis es una función que la Dirección asigna a una persona de la unidad. No es un rol de planta adicional. Quien redacta una especificación no adjudica gasto. Quien inspecciona un contrato no lo modifica.
+Catálogo canónico en código: `core/src/modules/users/domain/user-roles.ts` (espejo UI: `app/src/shared/auth/user-roles.ts`).
+
+| Rol | Cargo típico | Ve y hace |
+|-----|--------------|-----------|
+| `direccion` | Director/a | Tablero, instrucciones de envío, Consejo, calidad de inspector, lectura de ITS |
+| `analisis_datos` | Analista datos / control de gestión | Cartera, indicadores, Plan Comunal, nómina consolidada, encuesta |
+| `analisis_sistemas` | Analista TIC / televigilancia | Activos, especificaciones, recepción de compras TIC y radios |
+| `administrativo` | Administrativo/a personal y documentación | Expedientes, capacitaciones, credenciales, EPP, archivo |
+| `its` | ITS | Contratos, niveles de servicio, actas, incumplimientos |
+| `prevencion` | Liderazgo / coordinación preventivo | Sectores, rondas, programas, seguimiento de visitas |
+| `gestor` | Gestor territorial | Bitácora, visitas GPS, instrumento, orientación inicial |
+| `jefe_operaciones` | Jefe/a de Operaciones | Vista mando Central, bitácora operativa, personal de línea |
+| `operador_televigilancia` | Operador/a de televigilancia | Alertas y bitácora de Central (sin editar plan ni contratos) |
+| `inspector` | Inspector/a SM terreno | Tareas de terreno, notas, GPS, registros operativos |
+| `jefe_grd` | Jefe/a GRD | Planes de emergencia, COGRID, mapas de riesgo |
+| `grd` | Apoyo GRD | Ejecución y registro de emergencias / GRD |
+
+La coordinación de unidad (Análisis, Prevención) es una **función** que la Dirección asigna a alguien de la unidad; no es un rol de planta ni un valor extra de `users.role`. Quien redacta una especificación no adjudica gasto. Quien inspecciona un contrato no lo modifica.
 
 ## UI — mobile first
 

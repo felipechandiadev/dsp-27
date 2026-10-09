@@ -13,8 +13,8 @@ export class ListProjectsHandler implements IQueryHandler<ListProjectsQuery> {
     private readonly portfolio: PortfolioRepositoryPort,
   ) {}
 
-  async execute() {
-    const projects = await this.portfolio.listProjects();
+  async execute(query: ListProjectsQuery) {
+    const projects = await this.portfolio.listProjects(query.kind);
     return projects.map((p) => ({
       id: p.id,
       code: p.code,

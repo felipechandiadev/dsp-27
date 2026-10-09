@@ -1,1 +1,3 @@
-export class ListProjectsQuery {}
+export class ListProjectsQuery {
+  constructor(public readonly kind?: string) {}
+}

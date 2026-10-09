@@ -118,9 +118,13 @@ Validación sugerida: si `STORAGE_DRIVER=r2`, exigir las `R2_*` no vacías al ar
 DSP_SEED_ADMIN_USERNAME=direccion
 DSP_SEED_ADMIN_PASSWORD=
 DSP_SEED_ADMIN_EMAIL=direccion@dsp.local
+DSP_SEED_GESTOR_PASSWORD=gestor123
+DSP_SEED_PREVENCION_PASSWORD=prevencion123
+# Resto de perfiles: password por defecto = {rol}123
+# (opcional) DSP_SEED_ANALISIS_DATOS_PASSWORD=…
 ```
 
-El seed crea `persons.email` = `DSP_SEED_ADMIN_EMAIL` (contacto) y `users.username` = `DSP_SEED_ADMIN_USERNAME` (login).
+El seed crea **un usuario por cada** `USER_ROLES`. Para dirección: `persons.email` = `DSP_SEED_ADMIN_EMAIL` y `users.username` = `DSP_SEED_ADMIN_USERNAME`. Para el resto, username = nombre del rol.
 
 ### Microsoft Graph (Conectar Outlook)
 

@@ -104,7 +104,7 @@ Cuenta de acceso. El nombre de usuario es lo que se usa para entrar.
 | `persona_id` | uuid unique FK → persons | Obligatorio |
 | `username` | varchar unique | **Login** (p. ej. `jrodriguez` o RUT normalizado) |
 | `password_hash` | varchar | bcrypt; nunca en respuestas API |
-| `role` | varchar | Rol de sistema DSP (ver generalidades) |
+| `role` | varchar | Perfil de app: `direccion` \| `analisis_datos` \| `analisis_sistemas` \| `administrativo` \| `its` \| `prevencion` \| `gestor` \| `jefe_operaciones` \| `operador_televigilancia` \| `inspector` \| `jefe_grd` \| `grd` (ver [01-generalidades](./01-generalidades.md) · `user-roles.ts`) |
 | `status` | varchar | `active` \| `suspended` \| `inactive` |
 | `last_login_at` | timestamptz nullable | |
 | timestamps + `deleted_at` | | |

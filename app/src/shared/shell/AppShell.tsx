@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { Button, IconButton } from '@felipechandiadev/ui';
 import { NAV_SECTIONS } from '@/shared/navigation/nav-items';
+import { userRoleLabel } from '@/shared/auth/user-roles';
 import { NotificationBell } from '@/features/notifications/ui/notification-bell';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -92,7 +93,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className="dsp-sidebar__foot">
             <p className="dsp-sidebar__user">
-              {session?.user?.username ?? '—'} · {session?.user?.role ?? ''}
+              {session?.user?.username ?? '—'} ·{' '}
+              {userRoleLabel(session?.user?.role)}
             </p>
             <Button
               type="button"

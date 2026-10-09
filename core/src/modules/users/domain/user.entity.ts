@@ -28,6 +28,7 @@ export class User {
   @Column({ name: 'password_hash', type: 'varchar' })
   passwordHash: string;
 
+  /** Perfil de app — ver `USER_ROLES` en `user-roles.ts`. */
   @Column({ type: 'varchar' })
   role: string;
 

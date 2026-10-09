@@ -12,6 +12,7 @@ import { PORTFOLIO_REPOSITORY } from './application/ports/portfolio.repository.p
 import { TypeOrmPortfolioRepository } from './infrastructure/typeorm-portfolio.repository';
 import { PortfolioController } from './presentation/portfolio.controller';
 import { ListProjectsHandler } from './application/handlers/list-projects.handler';
+import { ListTasksHandler } from './application/handlers/list-tasks.handler';
 import { GetProjectHandler } from './application/handlers/get-project.handler';
 import { AssignTaskHandler } from './application/handlers/assign-task.handler';
 import { ListTaskAssigneesHandler } from './application/handlers/list-task-assignees.handler';
@@ -27,6 +28,7 @@ import { ListTaskAssigneesHandler } from './application/handlers/list-task-assig
   providers: [
     { provide: PORTFOLIO_REPOSITORY, useClass: TypeOrmPortfolioRepository },
     ListProjectsHandler,
+    ListTasksHandler,
     GetProjectHandler,
     AssignTaskHandler,
     ListTaskAssigneesHandler,

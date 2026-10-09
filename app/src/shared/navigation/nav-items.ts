@@ -4,6 +4,7 @@ import {
   Compass,
   Scale,
   FolderKanban,
+  ListTodo,
   Bell,
   Users,
   MapPinned,
@@ -32,9 +33,10 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/board', label: 'Tablero', icon: LayoutDashboard },
       { href: '/plan', label: 'Plan / Estrategia', icon: Compass },
-      { href: '/projects', label: 'Cartera', icon: FolderKanban },
+      { href: '/projects', label: 'Proyectos', icon: FolderKanban },
+      { href: '/tasks', label: 'Tareas', icon: ListTodo },
       { href: '/legal', label: 'Normas', icon: Scale },
-      { href: '/alerts', label: 'Alertas', icon: Bell },
+      { href: '/notifications', label: 'Notificaciones', icon: Bell },
     ],
   },
   {

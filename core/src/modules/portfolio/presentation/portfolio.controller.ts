@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -13,6 +14,7 @@ import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { AuthUser } from '@modules/auth/domain/jwt-payload';
 import { ListProjectsQuery } from '../application/queries/list-projects.query';
 import { GetProjectQuery } from '../application/queries/get-project.query';
+import { ListTasksQuery } from '../application/queries/list-tasks.query';
 import { ListTaskAssigneesQuery } from '../application/queries/list-task-assignees.query';
 import { AssignTaskCommand } from '../application/commands/assign-task.command';
 import { AssignTaskDto } from './dto/assign-task.dto';
@@ -28,8 +30,15 @@ export class PortfolioController {
   ) {}
 
   @Get()
-  list() {
-    return this.queryBus.execute(new ListProjectsQuery());
+  list(@Query('kind') kind?: string) {
+    const allowed =
+      kind === 'project' || kind === 'portfolio_task' ? kind : undefined;
+    return this.queryBus.execute(new ListProjectsQuery(allowed));
+  }
+
+  @Get('tasks')
+  listTasks() {
+    return this.queryBus.execute(new ListTasksQuery());
   }
 
   @Get('tasks/:taskId/assignees')

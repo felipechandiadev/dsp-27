@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { Badge, BasicPageLayout, Card } from '@felipechandiadev/ui';
 import { authOptions } from '@/lib/auth/auth-options';
+import { userRoleLabel } from '@/shared/auth/user-roles';
 
 async function fetchPlan(accessToken?: string) {
   if (!accessToken) return null;
@@ -55,7 +56,7 @@ export default async function BoardPage() {
       subtitle={
         <>
           {session?.user?.username}{' '}
-          <Badge variant="info">{session?.user?.role}</Badge>
+          <Badge variant="info">{userRoleLabel(session?.user?.role)}</Badge>
         </>
       }
     >

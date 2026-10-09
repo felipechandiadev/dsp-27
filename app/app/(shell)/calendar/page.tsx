@@ -18,7 +18,7 @@ export default async function CalendarPage() {
   return (
     <BasicPageLayout
       title="Calendario"
-      subtitle="Agenda de equipo — mes, capas DSP y Outlook"
+      subtitle="Agenda de equipo — semana o mes, capas DSP y Outlook"
     >
       {!ok ? (
         <Alert variant="warning">

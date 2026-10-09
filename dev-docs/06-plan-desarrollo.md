@@ -21,7 +21,7 @@ La app se usa en escritorio **y** en terreno (gestores, prevención, visitas). T
 | DoD de UI | Probar en DevTools dispositivo móvil **antes** de marcar la feature lista |
 | Design system | Solo `@felipechandiadev/ui` + shell en `app/src/shared` |
 
-Roles de terreno (`gestor`, `prevencion`) priorizan flujos cortos. Dirección / análisis pueden tener vistas densas en desktop, pero las mismas rutas deben degradar bien en móvil.
+Roles de terreno (`gestor`, `prevencion`, `inspector`, `operador_televigilancia`) priorizan flujos cortos. Dirección / análisis / jefaturas pueden tener vistas densas en desktop, pero las mismas rutas deben degradar bien en móvil.
 
 ## 2. Estructura de folders (comprometida)
 
