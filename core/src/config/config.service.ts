@@ -63,4 +63,49 @@ export class AppConfigService {
   get storageLocalDir(): string {
     return this.config.get<string>('STORAGE_LOCAL_DIR', './storage/uploads');
   }
+
+  get microsoft() {
+    const clientId = this.config.get<string>('MS_CLIENT_ID', '')?.trim() || '';
+    return {
+      clientId,
+      clientSecret:
+        this.config.get<string>('MS_CLIENT_SECRET', '')?.trim() || '',
+      tenantId: this.config.get<string>('MS_TENANT_ID', 'common') || 'common',
+      redirectUri:
+        this.config.get<string>('MS_REDIRECT_URI', '')?.trim() || '',
+      appRedirectUri:
+        this.config.get<string>('MS_APP_REDIRECT_URI', '')?.trim() ||
+        'http://localhost:5081/settings',
+      tokenEncryptionKey:
+        this.config.get<string>('MS_TOKEN_ENCRYPTION_KEY', '')?.trim() || '',
+      configured: Boolean(clientId),
+      appOnlyCalendar: this.config.get<boolean>('MS_APP_ONLY_CALENDAR', false),
+      scopes: [
+        'openid',
+        'profile',
+        'offline_access',
+        'User.Read',
+        'Mail.Read',
+        'Mail.Send',
+        'Calendars.ReadWrite',
+      ] as const,
+    };
+  }
+
+  get notifications() {
+    return {
+      dedupWindowMinutes: this.config.get<number>(
+        'NOTIFICATION_DEDUP_WINDOW_MINUTES',
+        15,
+      ),
+      outboxPollMs: this.config.get<number>(
+        'NOTIFICATION_OUTBOX_POLL_MS',
+        15000,
+      ),
+      outboxBatchSize: this.config.get<number>(
+        'NOTIFICATION_OUTBOX_BATCH_SIZE',
+        20,
+      ),
+    };
+  }
 }

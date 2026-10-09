@@ -121,6 +121,40 @@ DSP_SEED_ADMIN_EMAIL=direccion@dsp.local
 ```
 
 El seed crea `persons.email` = `DSP_SEED_ADMIN_EMAIL` (contacto) y `users.username` = `DSP_SEED_ADMIN_USERNAME` (login).
+
+### Microsoft Graph (Conectar Outlook)
+
+OAuth **delegado** por usuario. Login DSP no cambia. Si `MS_CLIENT_ID` está vacío, la integración queda deshabilitada y el core arranca igual.
+
+```text
+MS_CLIENT_ID=
+MS_CLIENT_SECRET=
+MS_TENANT_ID=common
+MS_REDIRECT_URI=http://localhost:5080/api/integrations/microsoft/callback
+MS_APP_REDIRECT_URI=http://localhost:5081/settings
+MS_TOKEN_ENCRYPTION_KEY=   # ≥32 chars si MS_CLIENT_ID está seteado
+```
+
+En Azure App Registration: redirect URI = `MS_REDIRECT_URI`; permisos Delegated `Mail.Read`, `Mail.Send`, `Calendars.ReadWrite`, `User.Read`, `offline_access`.
+
+Si `MS_CLIENT_ID` no está vacío, Joi exige secret, ambos redirect URI y la clave de cifrado.
+
+```text
+MS_APP_ONLY_CALENDAR=false   # true = overlay equipo vía Application Calendars.Read
+```
+
+Si `MS_APP_ONLY_CALENDAR=true`, Joi exige `MS_CLIENT_ID`, `MS_CLIENT_SECRET` y `MS_TENANT_ID` (preferir GUID del tenant municipal). Detalle: [08-calendario-equipo.md](./08-calendario-equipo.md).
+
+### Notificaciones
+
+```text
+NOTIFICATION_DEDUP_WINDOW_MINUTES=15
+NOTIFICATION_OUTBOX_POLL_MS=15000
+NOTIFICATION_OUTBOX_BATCH_SIZE=20
+```
+
+Detalle en [07-notificaciones.md](./07-notificaciones.md).
+
 ## App Next (`app/.env.local`) — cuando exista
 
 ```text

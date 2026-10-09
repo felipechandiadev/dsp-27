@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { Button, IconButton } from '@felipechandiadev/ui';
 import { NAV_SECTIONS } from '@/shared/navigation/nav-items';
+import { NotificationBell } from '@/features/notifications/ui/notification-bell';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -32,6 +33,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           DSP-27
           <span>Plan 2027</span>
         </Link>
+        <span className="dsp-topbar__actions">
+          <NotificationBell />
+        </span>
       </header>
 
       <div

@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth/auth-options';
 import { AppShell } from '@/shared/shell/AppShell';
+import { NotificationsRealtimeProvider } from '@/features/notifications/ui/notifications-realtime-provider';
 
 export default async function ShellLayout({
   children,
@@ -13,5 +14,9 @@ export default async function ShellLayout({
     redirect('/login');
   }
 
-  return <AppShell>{children}</AppShell>;
+  return (
+    <NotificationsRealtimeProvider>
+      <AppShell>{children}</AppShell>
+    </NotificationsRealtimeProvider>
+  );
 }

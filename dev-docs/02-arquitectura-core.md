@@ -11,7 +11,7 @@ El detalle de tablas está en [Modelo de datos](./04-modelo-datos.md).
 ```text
 Cliente (Next 16, mobile first — ver 06-plan-desarrollo)
         │  HTTPS /api
-        │  WSS  /realtime/alerts
+        │  WSS  /realtime/notifications
         ▼
 ┌──────────────────────────────────────────────┐
 │ core (NestJS, un proceso)                    │
@@ -26,7 +26,7 @@ Cliente (Next 16, mobile first — ver 06-plan-desarrollo)
    + PostGIS               (un driver activo: local u R2)
 ```
 
-Un solo proceso escucha HTTP y WebSocket. No hay un servicio de colas en la primera versión: el caso de uso persiste la alerta y el publisher la emite a la sala que corresponda.
+Un solo proceso escucha HTTP y WebSocket. Sin cola externa en MVP: el publish persiste deliveries + outbox; el worker de outbox envía correo async ([07-notificaciones](./07-notificaciones.md)).
 
 ## Capas de cada módulo
 
@@ -128,7 +128,7 @@ Se crean en el orden de la guía. Esta lista es el mapa completo para no redise�
 | `legal` | Normas, análisis, obligaciones y vínculos a O/proyectos |
 | `portfolio` | Proyectos, tareas, subtareas, N:M a O, notas, asignaciones, hitos, indicadores |
 | `multimedia` | Imágenes y documentos (`entity_type` + `entity_id`), incl. PDF de leyes |
-| `alerts` | Alerta persistida + gateway `/realtime/alerts` |
+| `notifications` | Hecho + deliveries + outbox email + gateway `/realtime/notifications` |
 | `training` | Cursos, aprobación, plazos del art. 13° |
 | `contracts` | Contratos e inspección ITS |
 | `procurement` | Especificaciones y licitaciones |
@@ -167,48 +167,29 @@ Recursos de la primera API usable:
 | `PUT /api/tasks/:id/objectives` | Vínculos a O (obligatorio si ya hay subtareas) |
 | `GET /api/tasks/:id/subtasks` | Subtareas |
 | `POST /api/tasks/:id/subtasks` | Subtarea; falla si la tarea no tiene O |
-| `POST /api/tasks/:id/assignees` | Vincular persona/staff |
+| `POST /api/projects/tasks/:taskId/assignees` | Vincular persona (+ notifica `task_assigned`) |
+| `GET /api/projects/tasks/:taskId/assignees` | Asignaciones activas |
 | `GET /api/notes` | Lista por `entityType` + `entityId` |
 | `POST /api/notes` | Crear nota en project \| task \| subtask |
 | `GET /api/multimedia` | Lista por `entityType` + `entityId` |
 | `POST /api/multimedia` | Upload multipart (task/subtask siempre habilitado) |
 | `GET /api/multimedia/:id/content` | Descarga según clasificación y rol |
-| `GET /api/alerts` | Bandeja del usuario |
-| `POST /api/alerts/:id/read` | Marca leída |
+| `GET /api/notifications/inbox` | Bandeja del usuario |
+| `GET /api/notifications/unread-count` | Contador sin leer |
+| `PATCH /api/notifications/deliveries/:id/read` | Marca leída |
+| `POST /api/notifications/deliveries/mark-all-read` | Marca todas leídas |
 
 Módulos posteriores: `/api/persons`, `/api/staff`, `/api/contracts`, `/api/territory`, `/api/procurement`, `/api/assets`.
 
 Errores: cuerpo `{ statusCode, message, error }`. 400 validación, 401 sin token o token inválido, 403 rol insuficiente, 404 inexistente.
 
-## WebSockets de alertas
+## Notificaciones en tiempo real
 
-Namespace: `/realtime/alerts`. Misma app Nest, `@nestjs/websockets` y `@nestjs/platform-socket.io`, como en Kai.
+Subsistema documentado en [07-notificaciones.md](./07-notificaciones.md).
 
-```text
-Caso de uso (handler)
-  → persiste fila en alerts
-  → AlertsRealtimePublisher.emit(payload)
-       → sala user:{userId}     alerta personal
-       → sala role:{rol}        alerta de la unidad
-```
+Resumen: hecho canónico (`notifications`) + bandeja (`notification_deliveries`) + outbox email + Socket.IO namespace `/realtime/notifications` (evento `notification:delivery`). El gateway solo autentica (JWT en `handshake.auth.token`) y une salas `user:{id}` / `role:{rol}`. El publisher solo emite. Los casos de uso llaman a `NotificationPublisherPort` y no importan `socket.io`.
 
-El gateway solo autentica y une salas. El publisher solo emite. El handler no importa `socket.io`. Ese corte es el de `NotificationsGateway` + `NotificationsRealtimePublisher` en Kai.
-
-Autenticación del socket: el cliente envía el JWT en `handshake.auth.token`. El gateway verifica la firma y el usuario. No se acepta un `userId` enviado por el cliente como prueba de identidad.
-
-Salas:
-
-| Sala | Quién entra | Ejemplo |
-|------|-------------|---------|
-| `user:{id}` | Ese usuario | “Tu tarea PRJ-3 vence en 7 días” |
-| `role:direccion` | Rol dirección | Nómina lista para instruir envío |
-| `role:its` | Rol ITS | Incidencia de contrato |
-| `role:administrativo` | Rol administrativo | Capacitación a 30 días del plazo |
-| `role:prevencion` | Rol prevención | Ronda del trimestre sin cerrar |
-
-Evento único de salida: `alert:created`, con `{ id, kind, title, body, projectId, taskId, createdAt }`. La bandeja histórica se lee por REST (`GET /api/alerts`).
-
-Tipos de alerta de la primera versión: hito por vencer, hito vencido, multimedia requerida ausente, incidencia ITS, plazo de capacitación. El botón de pánico y el despacho de Central no entran en este canal.
+Bandeja REST: `GET /api/notifications/inbox`. Correo MVP vía Outlook del actor (outbox async). Detalle de tablas, kinds y humo en el doc 07.
 
 ## Puerto de archivos (multimedia)
 

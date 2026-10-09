@@ -10,6 +10,11 @@ import { LegalObligation } from '@modules/legal/domain/legal-obligation.entity';
 import { Project } from '@modules/portfolio/domain/project.entity';
 import { Task } from '@modules/portfolio/domain/task.entity';
 import { WorkNote } from '@modules/portfolio/domain/work-note.entity';
+import { UserOauthAccount } from '@modules/integrations/microsoft/domain/user-oauth-account.entity';
+import { Notification } from '@modules/notifications/domain/notification.entity';
+import { NotificationDelivery } from '@modules/notifications/domain/notification-delivery.entity';
+import { NotificationOutbox } from '@modules/notifications/domain/notification-outbox.entity';
+import { TaskAssignee } from '@modules/portfolio/domain/task-assignee.entity';
 
 export const entities = [
   Person,
@@ -22,6 +27,11 @@ export const entities = [
   Project,
   Task,
   WorkNote,
+  UserOauthAccount,
+  Notification,
+  NotificationDelivery,
+  NotificationOutbox,
+  TaskAssignee,
 ];
 
 export function buildTypeOrmOptions(

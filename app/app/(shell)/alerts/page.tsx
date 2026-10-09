@@ -1,14 +1,31 @@
+import { getServerSession } from 'next-auth';
 import { Alert, BasicPageLayout, Card } from '@felipechandiadev/ui';
+import { authOptions } from '@/lib/auth/auth-options';
+import { coreFetch } from '@/lib/api/core-fetch';
+import type { InboxItem } from '@/features/notifications/lib/types';
+import { AlertsInboxClient } from '@/features/notifications/ui/alerts-inbox-client';
 
-export default function AlertsPage() {
+export default async function AlertsPage() {
+  const session = await getServerSession(authOptions);
+  const { data, ok } = await coreFetch<{ items: InboxItem[] }>(
+    '/api/notifications/inbox?limit=50',
+    session?.user?.accessToken,
+  );
+
   return (
-    <BasicPageLayout title="Alertas" subtitle="Plazos e incidencias en tiempo real">
-      <Card>
-        <Alert variant="info">
-          Módulo pendiente: WebSocket <code>/realtime/alerts</code> (paso 9 de la
-          guía).
+    <BasicPageLayout
+      title="Alertas"
+      subtitle="Bandeja de notificaciones del sistema"
+    >
+      {!ok ? (
+        <Alert variant="warning">
+          No se pudo cargar la bandeja. ¿Está el core levantado?
         </Alert>
-      </Card>
+      ) : (
+        <Card>
+          <AlertsInboxClient initialItems={data?.items ?? []} />
+        </Card>
+      )}
     </BasicPageLayout>
   );
 }

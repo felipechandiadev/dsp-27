@@ -11,6 +11,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { PlanModule } from './modules/plan/plan.module';
 import { LegalModule } from './modules/legal/legal.module';
 import { PortfolioModule } from './modules/portfolio/portfolio.module';
+import { MicrosoftModule } from './modules/integrations/microsoft/microsoft.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { CalendarModule } from './modules/calendar/calendar.module';
 
 @Module({
   imports: [
@@ -28,6 +31,9 @@ import { PortfolioModule } from './modules/portfolio/portfolio.module';
     PlanModule,
     LegalModule,
     PortfolioModule,
+    MicrosoftModule,
+    NotificationsModule,
+    CalendarModule,
   ],
 })
 export class AppModule {}

@@ -36,6 +36,12 @@ Por separado: `npm run core:dev` · `npm run app:dev`
 
 Login por **username** (no email). Secretos solo en `envs/shared.env` / `.env` locales.
 
+## Outlook (opcional)
+
+Login DSP + **Conectar Outlook** (OAuth delegado → Graph). Configurar en `envs/shared.env` las `MS_*` (ver `dev-docs/05-envs.md`). Sin `MS_CLIENT_ID` el core arranca y `status.configured=false`.
+
+En la UI: **Ajustes** → Conectar Outlook · **Correo** usa Graph delegado. **Calendario** de equipo = capa DSP + overlay Outlook app-only (`MS_APP_ONLY_CALENDAR`, ver `dev-docs/08-calendario-equipo.md`).
+
 ## Humo API
 
 ```bash
@@ -44,4 +50,18 @@ TOKEN=$(curl -s -X POST http://localhost:5080/api/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"username":"direccion","password":"direccion123"}' | jq -r .accessToken)
 curl -s http://localhost:5080/api/plan -H "Authorization: Bearer $TOKEN" | jq
+curl -s http://localhost:5080/api/integrations/microsoft/status \
+  -H "Authorization: Bearer $TOKEN" | jq
+curl -s http://localhost:5080/api/notifications/unread-count \
+  -H "Authorization: Bearer $TOKEN" | jq
+# Tras asignar una tarea (personId del seed):
+# curl -s -X POST "http://localhost:5080/api/projects/tasks/$TASK_ID/assignees" \
+#   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+#   -d '{"personId":"…","assignmentRole":"executor"}' | jq
+curl -s http://localhost:5080/api/notifications/inbox \
+  -H "Authorization: Bearer $TOKEN" | jq
+curl -s "http://localhost:5080/api/calendar/team?from=2026-10-01&to=2026-10-31&layers=dsp" \
+  -H "Authorization: Bearer $TOKEN" | jq
 ```
+
+Notificaciones: [`dev-docs/07-notificaciones.md`](./dev-docs/07-notificaciones.md) · Calendario equipo: [`dev-docs/08-calendario-equipo.md`](./dev-docs/08-calendario-equipo.md).

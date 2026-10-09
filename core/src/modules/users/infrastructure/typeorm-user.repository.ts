@@ -25,6 +25,21 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
     });
   }
 
+  findByPersonaId(personaId: string): Promise<User | null> {
+    return this.repo.findOne({
+      where: { personaId, status: 'active' },
+      relations: ['person'],
+    });
+  }
+
+  listActiveWithPerson(): Promise<User[]> {
+    return this.repo.find({
+      where: { status: 'active' },
+      relations: ['person'],
+      order: { username: 'ASC' },
+    });
+  }
+
   async updateLastLogin(id: string, at: Date): Promise<void> {
     await this.repo.update({ id }, { lastLoginAt: at });
   }

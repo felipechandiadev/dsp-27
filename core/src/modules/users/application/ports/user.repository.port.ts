@@ -5,5 +5,7 @@ export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 export interface UserRepositoryPort {
   findByUsername(username: string): Promise<User | null>;
   findByIdWithPerson(id: string): Promise<User | null>;
+  findByPersonaId(personaId: string): Promise<User | null>;
+  listActiveWithPerson(): Promise<User[]>;
   updateLastLogin(id: string, at: Date): Promise<void>;
 }

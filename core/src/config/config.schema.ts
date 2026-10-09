@@ -51,12 +51,50 @@ export const configSchema = Joi.object({
   DSP_SEED_ADMIN_EMAIL: Joi.string().optional(),
   DSP_SEED_GESTOR_PASSWORD: Joi.string().optional(),
   DSP_SEED_PREVENCION_PASSWORD: Joi.string().optional(),
-}).when(Joi.object({ STORAGE_DRIVER: Joi.valid('r2') }).unknown(), {
-  then: Joi.object({
-    R2_ACCOUNT_ID: Joi.string().required(),
-    R2_ENDPOINT: Joi.string().required(),
-    R2_ACCESS_KEY_ID: Joi.string().required(),
-    R2_SECRET_ACCESS_KEY: Joi.string().required(),
-    R2_BUCKET_NAME: Joi.string().required(),
-  }),
-});
+
+  MS_CLIENT_ID: Joi.string().allow('').optional(),
+  MS_CLIENT_SECRET: Joi.string().allow('').optional(),
+  MS_TENANT_ID: Joi.string().default('common'),
+  MS_REDIRECT_URI: Joi.string().allow('').optional(),
+  MS_APP_REDIRECT_URI: Joi.string().allow('').optional(),
+  MS_TOKEN_ENCRYPTION_KEY: Joi.string().allow('').optional(),
+  MS_APP_ONLY_CALENDAR: Joi.boolean().default(false),
+
+  NOTIFICATION_DEDUP_WINDOW_MINUTES: Joi.number().default(15),
+  NOTIFICATION_OUTBOX_POLL_MS: Joi.number().default(15000),
+  NOTIFICATION_OUTBOX_BATCH_SIZE: Joi.number().default(20),
+})
+  .when(Joi.object({ STORAGE_DRIVER: Joi.valid('r2') }).unknown(), {
+    then: Joi.object({
+      R2_ACCOUNT_ID: Joi.string().required(),
+      R2_ENDPOINT: Joi.string().required(),
+      R2_ACCESS_KEY_ID: Joi.string().required(),
+      R2_SECRET_ACCESS_KEY: Joi.string().required(),
+      R2_BUCKET_NAME: Joi.string().required(),
+    }),
+  })
+  .when(
+    Joi.object({
+      MS_CLIENT_ID: Joi.string().min(1).required(),
+    }).unknown(),
+    {
+      then: Joi.object({
+        MS_CLIENT_SECRET: Joi.string().min(1).required(),
+        MS_REDIRECT_URI: Joi.string().uri().required(),
+        MS_APP_REDIRECT_URI: Joi.string().uri().required(),
+        MS_TOKEN_ENCRYPTION_KEY: Joi.string().min(32).required(),
+      }),
+    },
+  )
+  .when(
+    Joi.object({
+      MS_APP_ONLY_CALENDAR: Joi.valid(true, 'true', '1').required(),
+    }).unknown(),
+    {
+      then: Joi.object({
+        MS_CLIENT_ID: Joi.string().min(1).required(),
+        MS_CLIENT_SECRET: Joi.string().min(1).required(),
+        MS_TENANT_ID: Joi.string().min(1).invalid('common').required(),
+      }),
+    },
+  );

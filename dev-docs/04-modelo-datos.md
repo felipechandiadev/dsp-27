@@ -35,7 +35,9 @@ projects (PRJ-* / TAR-*)
 
 work_notes ────────── entity_type + entity_id   (task | subtask | project)
 multimedia_assets ── entity_type + entity_id
-alerts ── user_id | role | project_id | task_id
+notifications ── group_key, kind, payload
+  ├── notification_deliveries ── user_id (bandeja)
+  └── notification_outbox ── channel email (async)
 ```
 
 Ideas fijas:
@@ -112,6 +114,24 @@ Sin columna `email`. El correo se lee vía `persona`.
 Auth: `POST /api/auth/login` con `{ username, password }`. JWT: `sub` = `user.id`, claims `personaId`, `username`, `role`. El guard no confía en un `userId` enviado por el cliente.
 
 `GET /api/auth/me` puede devolver username + datos de la persona (nombre, email) para la UI.
+
+### `user_oauth_accounts`
+
+Tokens OAuth de integraciones externas (MVP: Microsoft / Outlook). Un usuario puede conectar su buzón sin cambiar el login DSP.
+
+| Campo | Tipo | Notas |
+|-------|------|--------|
+| `id` | uuid PK | |
+| `user_id` | uuid FK → users | |
+| `provider` | varchar | `microsoft` |
+| `account_email` | varchar nullable | Email del perfil Graph (`/me`) |
+| `access_token_enc` | text | Access token cifrado (AES-256-GCM) |
+| `refresh_token_enc` | text | Refresh token cifrado |
+| `expires_at` | timestamptz | Expiración del access token |
+| `scopes` | text | Scopes concedidos (espacio-separados) |
+| `created_at` / `updated_at` | timestamptz | |
+
+Único: `(user_id, provider)`. API: `GET/DELETE /api/integrations/microsoft`, mail/calendar bajo el mismo prefijo.
 
 ### `staff` (funcionarios)
 
@@ -439,6 +459,7 @@ Quién ejecuta o responde por una tarea o subtarea.
 | `assignment_role` | varchar | `owner` \| `executor` \| `reviewer` \| `support` |
 | `assigned_at` | timestamptz | |
 | `unassigned_at` | timestamptz nullable | Histórico sin borrar fila |
+| `assigned_by_user_id` | uuid nullable FK → users | Quién asignó (actor de notificación/correo) |
 
 Check: `(task_id IS NOT NULL) <> (subtask_id IS NOT NULL)` en XOR; igual para person/staff.
 
@@ -553,8 +574,16 @@ Siguen el mismo estilo de FK y multimedia:
 5. `projects` + `project_strategic_objectives` + `obligation_projects` + seed cartera.
 6. `tasks`, `subtasks`, `task_strategic_objectives`, `task_assignees`, `milestones`, `indicators`, `work_notes`.
 7. `multimedia_assets` (incl. PDF de normas).
-8. `alerts`.
+8. `notifications`, `notification_deliveries`, `notification_outbox` (ver [07-notificaciones](./07-notificaciones.md)).
 9. Resto (territory, assets, contracts, procurement, training).
+
+### Notificaciones (resumen)
+
+Tres tablas en lugar de un `alerts` plano: hecho canónico, delivery por usuario, outbox de correo. Detalle de columnas y estados en [07-notificaciones.md](./07-notificaciones.md).
+
+### Calendario de equipo (vista)
+
+No introduce tablas nuevas en MVP. La agenda DSP se deriva de `tasks` (`starts_on`/`ends_on`) + `task_assignees` → `persons`. El overlay Outlook usa el email de la persona vía Graph app-only. Ver [08-calendario-equipo.md](./08-calendario-equipo.md).
 
 ## 9. Qué no modelar así
 

@@ -8,6 +8,8 @@ import {
   Users,
   MapPinned,
   CalendarDays,
+  Mail,
+  Settings,
 } from 'lucide-react';
 
 export type NavItem = {
@@ -40,8 +42,10 @@ export const NAV_SECTIONS: NavSection[] = [
     label: 'Operación',
     items: [
       { href: '/calendar', label: 'Calendario', icon: CalendarDays },
+      { href: '/mail', label: 'Correo', icon: Mail },
       { href: '/staff', label: 'Personal y nómina', icon: Users },
       { href: '/prevention', label: 'Prevención', icon: MapPinned },
+      { href: '/settings', label: 'Ajustes', icon: Settings },
     ],
   },
 ];

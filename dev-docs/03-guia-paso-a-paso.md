@@ -129,11 +129,11 @@ Módulo `multimedia` + notas. `STORAGE_DRIVER=local`.
 
 **Listo cuando:** descarga OK; 403 si clasificación/rol no calzan. El adaptador R2 puede existir en código pero no ser el default.
 
-## Paso 9 — Alertas y WebSocket
+## Paso 9 — Notificaciones, WebSocket y outbox email
 
-Módulo `alerts` (igual que antes: persistir + gateway `/realtime/alerts` + generadores de hitos).
+Módulo `notifications` ([doc 07](./07-notificaciones.md)): persistir hecho + deliveries + gateway `/realtime/notifications` + outbox email (Outlook del actor). Primer disparador: asignación de tarea (`portfolio.task_assigned`). Generadores de hitos/ITS después.
 
-**Listo cuando:** Socket.IO recibe `alert:created` y `GET /api/alerts` muestra la fila tras reconectar.
+**Listo cuando:** Socket.IO recibe `notification:delivery` y `GET /api/notifications/inbox` muestra la fila tras reconectar; sin Outlook del actor el outbox queda `skipped_no_sender` y la campanita igual funciona.
 
 ## Paso 10 — Staff, nómina y capacitaciones
 

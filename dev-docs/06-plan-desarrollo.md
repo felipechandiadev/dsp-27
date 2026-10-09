@@ -73,8 +73,11 @@ dsp-27/
 │   │   │   ├── plan/
 │   │   │   ├── legal/
 │   │   │   ├── portfolio/            # projects, tasks, subtasks, notes, assignees
+│   │   │   ├── integrations/
+│   │   │   │   └── microsoft/        # OAuth Outlook + Graph mail/calendar
+│   │   │   ├── notifications/        # inbox + WS + outbox email (doc 07)
+│   │   │   ├── calendar/             # agenda equipo DSP + Outlook (doc 08)
 │   │   │   ├── multimedia/
-│   │   │   ├── alerts/
 │   │   │   ├── training/             # fase posterior
 │   │   │   ├── contracts/
 │   │   │   ├── procurement/

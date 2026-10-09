@@ -7,6 +7,8 @@ import { InitPostgisPersonsUsers1760000000001 } from '../migrations/176000000000
 import { PlanInstrumentsObjectives1760000000002 } from '../migrations/1760000000002-PlanInstrumentsObjectives';
 import { LegalNormsObligations1760000000003 } from '../migrations/1760000000003-LegalNormsObligations';
 import { PortfolioTasksNotes1760000000004 } from '../migrations/1760000000004-PortfolioTasksNotes';
+import { UserOauthAccounts1760000000005 } from '../migrations/1760000000005-UserOauthAccounts';
+import { Notifications1760000000006 } from '../migrations/1760000000006-Notifications';
 
 const root = path.resolve(__dirname, '../..');
 dotenv.config({ path: path.join(root, '.env') });
@@ -26,6 +28,8 @@ export const AppDataSource = new DataSource({
     PlanInstrumentsObjectives1760000000002,
     LegalNormsObligations1760000000003,
     PortfolioTasksNotes1760000000004,
+    UserOauthAccounts1760000000005,
+    Notifications1760000000006,
   ],
   migrationsTableName: 'typeorm_migrations',
   logging: process.env.DB_LOGGING === 'true',

@@ -7,11 +7,13 @@ La app es el sistema de trabajo de la Dirección de Seguridad Pública de Parral
 ## Lectura
 
 1. [Generalidades](./01-generalidades.md) — qué es el producto, secciones, identidad, multimedia y **UI mobile first**.
-2. [Arquitectura del core](./02-arquitectura-core.md) — hexagonal con CQRS, el mismo molde que `kai-core`: Postgres, PostGIS, API REST y websockets de alertas.
+2. [Arquitectura del core](./02-arquitectura-core.md) — hexagonal con CQRS, el mismo molde que `kai-core`: Postgres, PostGIS, API REST y websockets.
 3. [Guía paso a paso](./03-guia-paso-a-paso.md) — orden de implementación. No se salta un paso.
 4. [Modelo de datos](./04-modelo-datos.md) — Persona / Usuario (login=username) / Funcionario, plan, normas, cartera, multimedia portable.
 5. [Variables de entorno](./05-envs.md) — matriz estilo Kai; `STORAGE_DRIVER` local **o** R2; entidad sin conflicto al cambiar almacén.
 6. [Plan de desarrollo](./06-plan-desarrollo.md) — folders congelados, librerías, bootstrap, DoD mobile first.
+7. [Notificaciones](./07-notificaciones.md) — hecho canónico + deliveries + WS + outbox email (asignación de tarea).
+8. [Calendario de equipo](./08-calendario-equipo.md) — capa DSP (tareas) + overlay Outlook app-only.
 
 Fuente de contenido del plan: `/Users/felipe/Desktop/contratos/seguridad-2027/` (libro Vivliostyle Cap. 1 y 3).
 
