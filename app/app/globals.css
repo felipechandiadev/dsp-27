@@ -1,0 +1,387 @@
+@import "tailwindcss";
+/*
+ * Escanear el DS vía symlink en node_modules (file:../../kai-ui).
+ * Un @source a ../../../kai-ui (fuera del repo) no genera utilidades
+ * como text-foreground / border-border → TextField se ve roto.
+ */
+@source "../../node_modules/@felipechandiadev/ui/src";
+@source "../src";
+/* Safelist mínimo por si el scan falla en CI */
+@source inline("text-foreground text-background text-primary text-secondary text-muted-foreground text-red-500 border-border border-primary border-background bg-transparent bg-muted bg-primary/10 focus:border-primary");
+
+@import "@felipechandiadev/ui/theme/tokens.css";
+@import "@felipechandiadev/ui/theme/components.css";
+
+:root {
+  color-scheme: light;
+  --app-topbar-height: 3.5rem;
+  --app-sidebar-width: 17.5rem;
+
+  /* Tokens DS — background blanco: TextField/label usan --color-background */
+  --color-primary: #0b3d5c;
+  --color-active: #0a334d;
+  --color-accent: #0b3d5c;
+  --color-secondary: #1e73ae;
+  --color-background: #ffffff;
+  --color-surface: #ffffff;
+  --color-foreground: #12181c;
+  --color-border: #c5d0d8;
+  --color-muted: #e8eef2;
+  --color-muted-foreground: #4a5864;
+  --color-neutral: #eef2f5;
+  --color-hover: #e2e9ef;
+  --color-success: #2e9e5b;
+  --color-info: #1e73ae;
+  --color-warning: #e6a100;
+  --color-error: #d64545;
+  --color-link: var(--color-primary);
+  --color-text-primary: var(--color-foreground);
+  --color-text-secondary: var(--color-muted-foreground);
+  --color-text-link: var(--color-link);
+  --color-text-disabled: color-mix(in srgb, var(--color-muted-foreground) 72%, transparent);
+  --color-text-on-primary: #ffffff;
+  --color-text-on-success: #ffffff;
+  --color-text-on-warning: #ffffff;
+  --color-text-on-error: #ffffff;
+  --color-text-positive: var(--color-success);
+  --color-text-negative: var(--color-error);
+  --color-text-info: var(--color-info);
+  --color-text-warning: var(--color-warning);
+  --color-text-error: var(--color-error);
+
+  /* Fondo de app (no confundir con --color-background del DS) */
+  --dsp-chrome-bg: #eef2f5;
+}
+
+/**
+ * Puente Tailwind v4 ↔ tokens del DS.
+ * Sin esto, clases como text-foreground / border-border / bg-transparent
+ * del TextField no resuelven color y el campo se ve “roto”.
+ */
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
+
+  --color-primary: var(--color-primary);
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-foreground: var(--color-foreground);
+  --color-border: var(--color-border);
+  --color-active: var(--color-active);
+  --color-accent: var(--color-accent);
+  --color-secondary: var(--color-secondary);
+  --color-muted: var(--color-muted);
+  --color-muted-foreground: var(--color-muted-foreground);
+  --color-success: var(--color-success);
+  --color-info: var(--color-info);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
+  --color-neutral: var(--color-neutral);
+  --color-hover: var(--color-hover);
+  --color-link: var(--color-link);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-link: var(--color-text-link);
+  --color-text-disabled: var(--color-text-disabled);
+  --color-text-on-primary: var(--color-text-on-primary);
+  --color-text-on-success: var(--color-text-on-success);
+  --color-text-on-warning: var(--color-text-on-warning);
+  --color-text-on-error: var(--color-text-on-error);
+  --color-text-positive: var(--color-text-positive);
+  --color-text-negative: var(--color-text-negative);
+  --color-text-info: var(--color-text-info);
+  --color-text-warning: var(--color-text-warning);
+  --color-text-error: var(--color-text-error);
+}
+
+/* Fallback: utilidades de color que usa TextField/Button del DS */
+@layer utilities {
+  .text-foreground {
+    color: var(--color-foreground);
+  }
+  .text-background {
+    color: var(--color-background);
+  }
+  .text-primary {
+    color: var(--color-primary);
+  }
+  .text-secondary {
+    color: var(--color-secondary);
+  }
+  .text-muted-foreground {
+    color: var(--color-muted-foreground);
+  }
+  .border-border {
+    border-color: var(--color-border);
+  }
+  .border-primary {
+    border-color: var(--color-primary);
+  }
+  .border-background {
+    border-color: var(--color-background);
+  }
+  .bg-transparent {
+    background-color: transparent;
+  }
+  .bg-muted {
+    background-color: var(--color-muted);
+  }
+  .focus\:border-primary:focus {
+    border-color: var(--color-primary);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--dsp-chrome-bg);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--color-neutral);
+  border: 1px solid var(--color-border);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  color: var(--color-foreground);
+}
+
+/* —— Auth / narrow pages —— */
+main.dsp-shell {
+  width: min(100%, 28rem);
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.dsp-brand {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 8vw, 2.75rem);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  margin: 0;
+  color: var(--color-foreground);
+}
+
+.dsp-lede {
+  margin: 0;
+  color: var(--color-muted-foreground);
+  font-size: 1rem;
+}
+
+.dsp-meta {
+  font-size: 0.85rem;
+  color: var(--color-muted-foreground);
+  margin: 0;
+}
+
+.dsp-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dsp-stack .fs-button {
+  width: 100%;
+}
+
+/* —— App chrome —— */
+.dsp-app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--dsp-chrome-bg);
+  color: var(--color-foreground);
+}
+
+.dsp-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--app-topbar-height);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.75rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dsp-topbar__brand {
+  font-weight: var(--font-weight-bold);
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  color: var(--color-foreground);
+  flex: 1;
+  min-width: 0;
+}
+
+.dsp-topbar__brand span {
+  color: var(--color-muted-foreground);
+  font-weight: var(--font-weight-medium);
+  font-size: 0.8rem;
+  margin-left: 0.4rem;
+}
+
+.dsp-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.dsp-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: min(var(--app-sidebar-width), 88vw);
+  z-index: 50;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  transform: translateX(-105%);
+  transition: transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 0 1rem;
+}
+
+.dsp-sidebar.is-open {
+  transform: translateX(0);
+}
+
+.dsp-sidebar__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background: rgb(18 24 28 / 45%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.dsp-sidebar__overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.dsp-sidebar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.75rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 0.5rem;
+}
+
+.dsp-sidebar__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-foreground);
+}
+
+.dsp-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.dsp-nav__section {
+  margin: 0.85rem 0.5rem 0.35rem;
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+.dsp-nav__link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.7rem 0.75rem;
+  border-radius: 0.65rem;
+  color: var(--color-foreground);
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-medium);
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dsp-nav__link:hover {
+  background: var(--color-hover);
+}
+
+.dsp-nav__link.is-active {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+
+.dsp-nav__link svg {
+  flex-shrink: 0;
+  color: currentColor;
+  opacity: 0.85;
+}
+
+.dsp-sidebar__foot {
+  padding: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dsp-sidebar__user {
+  font-size: 0.85rem;
+  color: var(--color-muted-foreground);
+  padding: 0 0.25rem;
+}
+
+.dsp-main {
+  flex: 1;
+  min-width: 0;
+  padding: 1rem;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .dsp-sidebar {
+    position: sticky;
+    top: var(--app-topbar-height);
+    height: calc(100dvh - var(--app-topbar-height));
+    transform: none;
+    flex-shrink: 0;
+  }
+
+  .dsp-sidebar__overlay,
+  .dsp-topbar__menu,
+  .dsp-sidebar__close {
+    display: none;
+  }
+
+  .dsp-main {
+    padding: 1.25rem 1.5rem 2rem;
+  }
+}

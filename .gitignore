@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+*.log
+.env
+.env.local
+.env.development
+core/.env
+core/.env.local
+app/.env.local
+app/.next/
+envs/shared.env
+core/storage/uploads/**
+!core/storage/uploads/.gitkeep
+*.tsbuildinfo
+.nest/

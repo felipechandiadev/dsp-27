@@ -1,0 +1,27 @@
+{
+  "name": "dsp-27",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DSP Parral — Plan de Seguridad Pública 2027",
+  "workspaces": [
+    "core",
+    "app"
+  ],
+  "scripts": {
+    "env:dev": "bash scripts/env-dev.sh --force",
+    "dev": "bash scripts/dev-all.sh",
+    "core:dev": "npm run start:dev --workspace=core",
+    "app:dev": "npm run dev --workspace=app",
+    "migration:run": "npm run migration:run --workspace=core",
+    "seed": "npm run seed --workspace=core",
+    "build": "npm run build --workspace=core && npm run build --workspace=app",
+    "build:core": "npm run build --workspace=core",
+    "build:app": "npm run build --workspace=app"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
