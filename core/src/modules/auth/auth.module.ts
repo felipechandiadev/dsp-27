@@ -8,6 +8,7 @@ import { AppConfigService } from '@config/config.service';
 import { AuthController } from './presentation/auth.controller';
 import { LoginHandler } from './application/handlers/login.handler';
 import { GetMeHandler } from './application/handlers/get-me.handler';
+import { ChangePasswordHandler } from './application/handlers/change-password.handler';
 import { JwtStrategy } from './infrastructure/jwt.strategy';
 
 @Module({
@@ -26,7 +27,12 @@ import { JwtStrategy } from './infrastructure/jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [LoginHandler, GetMeHandler, JwtStrategy],
+  providers: [
+    LoginHandler,
+    GetMeHandler,
+    ChangePasswordHandler,
+    JwtStrategy,
+  ],
   exports: [JwtModule, PassportModule],
 })
 export class AuthModule {}

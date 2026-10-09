@@ -5,12 +5,11 @@ import { useRouter } from 'next/navigation';
 import {
   Badge,
   Card,
+  CollectionGrid,
   DataGrid,
-  NextNavProvider,
   type DataGridColumn,
 } from '@felipechandiadev/ui';
 import { useListCardsView } from '@/shared/ui/use-list-cards-view';
-import { ViewModeToggle } from '@/shared/ui/view-mode-toggle';
 
 export type TaskRow = {
   id: string;
@@ -24,14 +23,28 @@ export type TaskRow = {
   projectTitle: string;
 };
 
-export function TasksDataGrid({ rows }: { rows: TaskRow[] }) {
+type Props = {
+  rows: TaskRow[];
+  totalRows: number;
+  limit?: number;
+};
+
+/** Columnas las fija `.dsp-portfolio-card-grid` en CSS (2 / 3 / 4). */
+const CARD_COLS = 4;
+
+export function TasksDataGrid({ rows, totalRows, limit = 25 }: Props) {
   const router = useRouter();
-  const { view, setView } = useListCardsView();
-  const toggle = <ViewModeToggle view={view} onChange={setView} />;
+  const { view } = useListCardsView();
 
   const columns: DataGridColumn[] = [
     { field: 'code', headerName: 'Código', width: 120, sortable: true },
-    { field: 'title', headerName: 'Título', flex: 1, minWidth: 180, sortable: true },
+    {
+      field: 'title',
+      headerName: 'Título',
+      flex: 1,
+      minWidth: 180,
+      sortable: true,
+    },
     {
       field: 'status',
       headerName: 'Estado',
@@ -53,67 +66,67 @@ export function TasksDataGrid({ rows }: { rows: TaskRow[] }) {
 
   if (view === 'cards') {
     return (
-      <div className="flex flex-col gap-3">
-        <div className="flex justify-end">{toggle}</div>
-        <div className="flex flex-col gap-3 max-w-3xl">
-          {rows.length === 0 ? (
-            <p className="text-sm text-[var(--color-muted-foreground)] m-0">
-              No hay tareas aún.
-            </p>
-          ) : (
-            rows.map((t) => (
-              <Card
-                key={t.id}
-                title={
-                  <span>
-                    {t.code ? `${t.code} — ` : ''}
-                    {t.title}
-                  </span>
-                }
-                headerEnd={<Badge variant="secondary">{t.status}</Badge>}
-                subtitle={
-                  <Link
-                    href={`/projects/${t.projectCode}`}
-                    className="hover:underline"
-                  >
-                    {t.projectCode} — {t.projectTitle}
-                  </Link>
-                }
+      <CollectionGrid
+        totalRows={totalRows}
+        limit={limit}
+        fillViewport
+        viewportBottomInset={16}
+        showSearch
+        showFooter
+        searchPlaceholder="Buscar tareas…"
+        contentEmptyMessage="No hay tareas aún."
+        contentGridColumns={CARD_COLS}
+        contentGridGapClassName="gap-3"
+        contentGridClassName="dsp-portfolio-card-grid"
+        contentGridItemsAlign="start"
+        data-test-id="tasks-collection-grid"
+        contentItems={rows.map((t) => (
+          <Card
+            key={t.id}
+            fillHeight
+            className="dsp-portfolio-card cursor-pointer"
+            onClick={() => router.push(`/projects/${t.projectCode}`)}
+            title={t.code ?? t.title}
+            headerEnd={<Badge variant="secondary">{t.status}</Badge>}
+            subtitle={t.code ? t.title : undefined}
+          >
+            <p className="text-sm text-[var(--color-muted-foreground)] m-0 line-clamp-3">
+              <Link
+                href={`/projects/${t.projectCode}`}
+                className="hover:underline"
+                onClick={(e) => e.stopPropagation()}
               >
-                <p className="text-sm text-[var(--color-muted-foreground)] m-0">
-                  {[t.startsOn, t.endsOn].filter(Boolean).join(' → ') ||
-                    'Sin fechas'}
-                  {t.leadRole ? ` · ${t.leadRole}` : ''}
-                </p>
-              </Card>
-            ))
-          )}
-        </div>
-      </div>
+                {t.projectCode} — {t.projectTitle}
+              </Link>
+            </p>
+            <p className="text-xs text-[var(--color-muted-foreground)] m-0 mt-auto pt-2">
+              {[t.startsOn, t.endsOn].filter(Boolean).join(' → ') ||
+                'Sin fechas'}
+              {t.leadRole ? ` · ${t.leadRole}` : ''}
+            </p>
+          </Card>
+        ))}
+      />
     );
   }
 
   return (
-    <NextNavProvider>
-      <DataGrid
-        title="Tareas"
-        columns={columns}
-        rows={rows}
-        totalRows={rows.length}
-        paginationMode="controlled"
-        page={1}
-        limit={Math.max(rows.length, 1)}
-        showFooter={false}
-        showSearch={false}
-        showSortButton={false}
-        showFilterButton={false}
-        showExportButton={false}
-        headerActions={toggle}
-        onRowClick={(row) => {
-          if (row?.projectCode) router.push(`/projects/${row.projectCode}`);
-        }}
-        height="auto"
-      />
-    </NextNavProvider>
+    <DataGrid
+      columns={columns}
+      rows={rows}
+      totalRows={totalRows}
+      limit={limit}
+      fillViewport
+      viewportBottomInset={16}
+      showFooter
+      showSearch
+      showSortButton={false}
+      showFilterButton={false}
+      showExportButton={false}
+      onRowClick={(row) => {
+        if (row?.projectCode) router.push(`/projects/${row.projectCode}`);
+      }}
+      data-test-id="tasks-datagrid"
+    />
   );
 }

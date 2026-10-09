@@ -99,14 +99,16 @@ Módulo `plan`. Tablas: `plan_instruments`, `strategic_objectives` (fichas Cap. 
 
 ## Paso 6 — Marco normativo
 
-Módulo `legal`.
+Módulo `legal` + PDF vía `multimedia`.
 
-- Seed `legal_norms` Cap. 1.1–1.7 (incl. ley corta como `bill` / `in_process`).
-- `legal_norm_analyses` con el párrafo de análisis del Cap. 1 por norma.
-- `legal_obligations` del callout (orgánica, Plan Comunal, Consejo/Comité, EPP, inspectores, televigilancia/alerta, SITIA, aparcadero).
-- Endpoints de listado y detalle; subir PDF con `entityType=legal_norm` (puede esperar al paso 8 si multimedia aún no está; metadato de norma sí).
+- Seed `legal_norms` Cap. 1 (leyes, DS 97, boletín en trámite, decreto municipal).
+- `GET/POST/PATCH /api/legal/norms`, `GET /api/legal/norms/:code` (incluye `pdfAsset`).
+- `POST /api/legal/norms/:code/pdf` — PDF oficial (`entity_type=legal_norm`, `kind=document`, replace).
+- Escritura: roles `direccion` y `administrativo`.
+- UI `/legal` (cards) + `/legal/[code]` (ficha + adjunto); componente reutilizable `EntityAttachments`.
+- `legal_norm_analyses` / CRUD de obligaciones: fase posterior (listado de obligaciones ya existe).
 
-**Listo cuando:** `GET /api/legal/norms` lista Ley 21.802 y DS 97; una obligación “Orgánica en Reglamento” existe y queda lista para vincular a PRJ-1.
+**Listo cuando:** listado Cap. 1; detalle con metadatos; PDF subible y legible; `OBL-ORGANICA` enlazable a cartera.
 
 ## Paso 7 — Motor de cartera (proyecto → tarea → subtarea)
 

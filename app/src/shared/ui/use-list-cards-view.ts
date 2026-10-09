@@ -1,40 +1,32 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { PORTFOLIO_CARDS_LIMIT, PORTFOLIO_LIST_LIMIT } from './list-query';
 
 export type ListCardsView = 'list' | 'cards';
 
-function defaultViewForViewport(): ListCardsView {
-  if (typeof window === 'undefined') return 'cards';
-  return window.matchMedia('(min-width: 768px)').matches ? 'list' : 'cards';
-}
-
-/** Toggle lista/cards con `?view=list|cards`; default cards móvil / list desde md. */
+/** Toggle lista/cards; default lista (`?view=` ausente o `list`). */
 export function useListCardsView() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const fromUrl = searchParams.get('view');
-  const [view, setViewState] = useState<ListCardsView>(() => {
-    if (fromUrl === 'list' || fromUrl === 'cards') return fromUrl;
-    return defaultViewForViewport();
-  });
-
-  useEffect(() => {
-    if (fromUrl === 'list' || fromUrl === 'cards') {
-      setViewState(fromUrl);
-      return;
-    }
-    setViewState(defaultViewForViewport());
-  }, [fromUrl]);
+  const view: ListCardsView = fromUrl === 'cards' ? 'cards' : 'list';
 
   const setView = useCallback(
     (next: ListCardsView) => {
-      setViewState(next);
       const params = new URLSearchParams(searchParams.toString());
-      params.set('view', next);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      if (next === 'list') {
+        params.delete('view');
+        params.set('limit', String(PORTFOLIO_LIST_LIMIT));
+      } else {
+        params.set('view', 'cards');
+        params.set('limit', String(PORTFOLIO_CARDS_LIMIT));
+      }
+      params.set('page', '1');
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
     [pathname, router, searchParams],
   );

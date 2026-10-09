@@ -5,6 +5,7 @@ import {
   LEGAL_REPOSITORY,
   LegalRepositoryPort,
 } from '../ports/legal.repository.port';
+import { mapNormListItem } from '../helpers/norm.mapper';
 
 @QueryHandler(ListNormsQuery)
 export class ListNormsHandler implements IQueryHandler<ListNormsQuery> {
@@ -13,17 +14,11 @@ export class ListNormsHandler implements IQueryHandler<ListNormsQuery> {
     private readonly legal: LegalRepositoryPort,
   ) {}
 
-  async execute() {
-    const norms = await this.legal.listNorms();
-    return norms.map((n) => ({
-      id: n.id,
-      code: n.code,
-      kind: n.kind,
-      numberLabel: n.numberLabel,
-      shortTitle: n.shortTitle,
-      status: n.status,
-      summary: n.summary,
-      sortOrder: n.sortOrder,
-    }));
+  async execute(query: ListNormsQuery) {
+    const norms = await this.legal.listNorms({
+      kind: query.kind,
+      status: query.status,
+    });
+    return norms.map(mapNormListItem);
   }
 }

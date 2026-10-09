@@ -16,6 +16,7 @@ export interface PortfolioRepositoryPort {
   assignPersonToTask(input: {
     taskId: string;
     personId: string;
+    staffId?: string | null;
     assignmentRole: string;
     assignedByUserId: string;
   }): Promise<TaskAssignee>;

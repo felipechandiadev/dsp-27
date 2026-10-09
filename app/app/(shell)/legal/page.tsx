@@ -1,50 +1,59 @@
 import { getServerSession } from 'next-auth';
-import { Badge, BasicPageLayout, Card } from '@felipechandiadev/ui';
+import { Alert } from '@felipechandiadev/ui';
 import { authOptions } from '@/lib/auth/auth-options';
+import { coreFetch } from '@/lib/api/core-fetch';
+import {
+  filterBySearch,
+  parseListQuery,
+  type ListSearchParams,
+} from '@/shared/ui/list-query';
+import { NormsCollection } from '@/features/legal/ui/NormsCollection';
+import type { NormListItem } from '@/features/legal/ui/legal-types';
 
-async function fetchNorms(accessToken?: string) {
-  if (!accessToken) return [];
-  const base =
-    process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ||
-    'http://localhost:5080';
-  try {
-    const res = await fetch(`${base}/api/legal/norms`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      cache: 'no-store',
-    });
-    if (!res.ok) return [];
-    return (await res.json()) as Array<{
-      code: string;
-      numberLabel: string;
-      shortTitle: string;
-      status: string;
-      summary: string | null;
-    }>;
-  } catch {
-    return [];
-  }
-}
-
-export default async function LegalPage() {
+export default async function LegalPage({
+  searchParams,
+}: {
+  searchParams: Promise<ListSearchParams & { kind?: string; status?: string }>;
+}) {
   const session = await getServerSession(authOptions);
-  const norms = await fetchNorms(session?.user?.accessToken);
+  const params = await searchParams;
+  const { search } = parseListQuery(params);
+
+  const qs = new URLSearchParams();
+  if (typeof params.kind === 'string' && params.kind) {
+    qs.set('kind', params.kind);
+  }
+  if (typeof params.status === 'string' && params.status) {
+    qs.set('status', params.status);
+  }
+  const path = qs.toString()
+    ? `/api/legal/norms?${qs.toString()}`
+    : '/api/legal/norms';
+
+  const { ok, data } = await coreFetch<NormListItem[]>(
+    path,
+    session?.user?.accessToken,
+  );
+
+  if (!ok) {
+    return (
+      <div className="p-4">
+        <Alert variant="error">No se pudo cargar el marco normativo.</Alert>
+      </div>
+    );
+  }
+
+  const all = Array.isArray(data) ? data : [];
+  const filtered = filterBySearch(all, search, (n) => [
+    n.code,
+    n.kind,
+    n.numberLabel,
+    n.shortTitle,
+    n.status,
+    n.summary,
+  ]);
 
   return (
-    <BasicPageLayout title="Normas" subtitle="Marco normativo Cap. 1">
-      <div className="flex flex-col gap-3 max-w-3xl">
-        {norms.map((n) => (
-          <Card
-            key={n.code}
-            title={`${n.numberLabel} — ${n.shortTitle}`}
-            headerEnd={<Badge variant="info">{n.status}</Badge>}
-            subtitle={n.code}
-          >
-            <p className="text-sm text-[var(--color-muted-foreground)] m-0 leading-relaxed">
-              {n.summary ?? 'Sin resumen.'}
-            </p>
-          </Card>
-        ))}
-      </div>
-    </BasicPageLayout>
+    <NormsCollection rows={filtered} role={session?.user?.role} />
   );
 }

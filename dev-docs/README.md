@@ -14,6 +14,9 @@ La app es el sistema de trabajo de la Dirección de Seguridad Pública de Parral
 6. [Plan de desarrollo](./06-plan-desarrollo.md) — folders congelados, librerías, bootstrap, DoD mobile first.
 7. [Notificaciones](./07-notificaciones.md) — hecho canónico + deliveries + WS + outbox email (asignación de tarea).
 8. [Calendario de equipo](./08-calendario-equipo.md) — capa DSP (tareas) + overlay Outlook app-only.
+9. [Contratos / ITS](./09-contratos-its.md) — privados, períodos mensuales, checklist y certificación.
+10. [Personal / staff](./10-personal-staff.md) — expediente, checklist art. 12°, calidad inspector y nómina art. 15°.
+11. [Códigos de registro](./11-codigos-registro.md) — folio `TTT` + año + correlativo (p. ej. `PRY26000001`).
 
 Fuente de contenido del plan: `/Users/felipe/Desktop/contratos/seguridad-2027/` (libro Vivliostyle Cap. 1 y 3).
 

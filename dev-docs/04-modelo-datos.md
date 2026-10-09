@@ -77,7 +77,7 @@ Quién es. Sin contraseña. Soft delete.
 | Campo | Tipo | Notas |
 |-------|------|--------|
 | `id` | uuid PK | |
-| `code` | varchar(16) unique nullable | Folio interno opcional |
+| `code` | varchar(16) unique nullable | Folio `PSN` + AA + NNNNNN (opcional; seed/API lo asignan) |
 | `first_name` | varchar | |
 | `last_name` | varchar | |
 | `document_type` | varchar | `RUN` \| `RUT` \| `PASSPORT` \| `DNI` |
@@ -104,7 +104,7 @@ Cuenta de acceso. El nombre de usuario es lo que se usa para entrar.
 | `persona_id` | uuid unique FK → persons | Obligatorio |
 | `username` | varchar unique | **Login** (p. ej. `jrodriguez` o RUT normalizado) |
 | `password_hash` | varchar | bcrypt; nunca en respuestas API |
-| `role` | varchar | Perfil de app: `direccion` \| `analisis_datos` \| `analisis_sistemas` \| `administrativo` \| `its` \| `prevencion` \| `gestor` \| `jefe_operaciones` \| `operador_televigilancia` \| `inspector` \| `jefe_grd` \| `grd` (ver [01-generalidades](./01-generalidades.md) · `user-roles.ts`) |
+| `role` | varchar | Perfil de app: `direccion` \| `admin_sistema` \| `analisis_datos` \| `analisis_sistemas` \| `administrativo` \| `its` \| `prevencion` \| `gestor` \| `jefe_operaciones` \| `operador_televigilancia` \| `inspector` \| `jefe_grd` \| `grd` (ver [01-generalidades](./01-generalidades.md) · `user-roles.ts`) |
 | `status` | varchar | `active` \| `suspended` \| `inactive` |
 | `last_login_at` | timestamptz nullable | |
 | timestamps + `deleted_at` | | |
@@ -140,6 +140,7 @@ Personal afecto a la Dirección (análogo a `employees` en Civika). Capa Ley 21.
 | Campo | Tipo | Notas |
 |-------|------|--------|
 | `id` | uuid PK | |
+| `code` | varchar unique | Folio `PER` + AA + NNNNNN (ver [11-codigos-registro](./11-codigos-registro.md)) |
 | `persona_id` | uuid unique FK → persons | |
 | `unit` | varchar | `analisis` \| `prevencion` \| `operaciones` \| `direccion` \| `grd` |
 | `ds97_profile` | varchar nullable | `fiscalizador` \| `coadyuvante` \| `no_operativo` |
@@ -155,7 +156,7 @@ Un funcionario puede existir **sin** usuario (expediente y email en persona; aú
 
 La nómina (art. 15°) es una **query** sobre `staff` con `inspector_quality_status = granted`, no una tabla de sueldos.
 
-Detalle de requisitos art. 12°, declaración art. 16° y capacitaciones: tablas hijas en `staff` / `training`, siempre con `staff_id` y adjuntos vía multimedia.
+Detalle de requisitos art. 12° (MVP): `staff_requirement_checks` (`requirement_code`, `status`). Capacitaciones y multimedia: ver [10-personal-staff.md](./10-personal-staff.md).
 
 ## 2. Instrumento del plan — misión, visión y O1–O4
 
@@ -340,7 +341,7 @@ Ficha del libro (PRJ-\* o TAR-\*).
 | Campo | Tipo | Notas |
 |-------|------|--------|
 | `id` | uuid PK | |
-| `code` | varchar unique | `PRJ-5`, `TAR-3`, … |
+| `code` | varchar unique | Folio `PRY`/`TAR` + AA + NNNNNN (libro: PRJ-*/TAR-* en narrativa; ver [11](./11-codigos-registro.md)) |
 | `kind` | varchar | `project` \| `portfolio_task` (TAR del libro) |
 | `title` | varchar | |
 | `status` | varchar | |
@@ -560,7 +561,9 @@ Siguen el mismo estilo de FK y multimedia:
 |--------|---------------|------------------|
 | `territory` | `sectors` (polygon), visitas pueden ser `subtasks` de PRJ-14 | `project_id` / `task_id` |
 | `assets` | cámaras, radios, EPP, puntos SUBDERE + Point | opcional a task |
-| `contracts` | contrato, incidencias | `project_id` (p. ej. PRJ-13) |
+| `contracts` | `contractors`, `contracts`, `contract_periods`, `contract_period_documents` (MVP ITS; ver [09](./09-contratos-its.md)) | `project_id` opcional (p. ej. PRJ-13) |
+| `staff` | `staff`, `staff_requirement_checks` (MVP; ver [10](./10-personal-staff.md)) | `task_assignees.staff_id` |
+| `record_codes` | `record_code_sequences` (folio `TTT`+año+correlativo; ver [11](./11-codigos-registro.md)) | — |
 | `procurement` | especificación / bases | `project_id` o `task_id` |
 | `training` | cursos, completaciones | `staff_id` + multimedia |
 | `diagnosis` | problemas Cap. 2 (fase posterior) | → O / projects |

@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
+import { Users } from 'lucide-react';
 import { Alert, BasicPageLayout, Button, Card } from '@felipechandiadev/ui';
 import { authOptions } from '@/lib/auth/auth-options';
 import { coreFetch, type MicrosoftStatus } from '@/lib/api/core-fetch';
+import { canAdminUsers } from '@/shared/auth/user-roles';
 
 export default async function SettingsPage({
   searchParams,
@@ -11,6 +13,7 @@ export default async function SettingsPage({
 }) {
   const session = await getServerSession(authOptions);
   const params = await searchParams;
+  const showUsersAdmin = canAdminUsers(session?.user?.role);
   const { data: status } = await coreFetch<MicrosoftStatus>(
     '/api/integrations/microsoft/status',
     session?.user?.accessToken,
@@ -35,6 +38,43 @@ export default async function SettingsPage({
       subtitle="Integraciones de tu cuenta DSP"
     >
       {banner ? <Alert variant={banner.variant}>{banner.text}</Alert> : null}
+
+      {showUsersAdmin ? (
+        <Card>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem',
+            }}
+          >
+            <Users
+              className="h-6 w-6 shrink-0 mt-0.5"
+              aria-hidden
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem' }}>
+                Usuarios
+              </h2>
+              <p
+                style={{
+                  margin: '0 0 1rem',
+                  opacity: 0.85,
+                  fontSize: '0.95rem',
+                }}
+              >
+                Crear y administrar cuentas de acceso a la app (perfiles,
+                estado y contraseñas).
+              </p>
+              <Link href="/settings/users">
+                <Button type="button" variant="primary">
+                  Administrar usuarios
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Card>
+      ) : null}
 
       <Card>
         <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem' }}>Outlook</h2>

@@ -9,6 +9,11 @@ import { LegalNormsObligations1760000000003 } from '../migrations/1760000000003-
 import { PortfolioTasksNotes1760000000004 } from '../migrations/1760000000004-PortfolioTasksNotes';
 import { UserOauthAccounts1760000000005 } from '../migrations/1760000000005-UserOauthAccounts';
 import { Notifications1760000000006 } from '../migrations/1760000000006-Notifications';
+import { ContractsIts1760000000007 } from '../migrations/1760000000007-ContractsIts';
+import { StaffPersonal1760000000008 } from '../migrations/1760000000008-StaffPersonal';
+import { MultimediaAssets1760000000009 } from '../migrations/1760000000009-MultimediaAssets';
+import { RecordCodeSequences1760000000010 } from '../migrations/1760000000010-RecordCodeSequences';
+
 
 const root = path.resolve(__dirname, '../..');
 dotenv.config({ path: path.join(root, '.env') });
@@ -30,6 +35,10 @@ export const AppDataSource = new DataSource({
     PortfolioTasksNotes1760000000004,
     UserOauthAccounts1760000000005,
     Notifications1760000000006,
+    ContractsIts1760000000007,
+    StaffPersonal1760000000008,
+    MultimediaAssets1760000000009,
+    RecordCodeSequences1760000000010,
   ],
   migrationsTableName: 'typeorm_migrations',
   logging: process.env.DB_LOGGING === 'true',

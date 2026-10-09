@@ -1,6 +1,10 @@
 /**
  * Idempotent development seed for DSP-27.
  * Usage: npm run seed (from root or core workspace)
+ *
+ * Folios de registro (`persons`, `projects`, `tasks`, `contracts`, `staff`)
+ * usan el mismo formato que la API: TTT + AA + NNNNNN (ver RecordCodeService).
+ * Las claves del libro (PRJ-1, TAR-3…) solo sirven de ancla interna del seed.
  */
 import 'reflect-metadata';
 import * as bcrypt from 'bcryptjs';
@@ -18,6 +22,111 @@ import {
   USER_ROLES,
   type UserRole,
 } from '../modules/users/domain/user-roles';
+import { Contractor } from '../modules/contracts/domain/contractor.entity';
+import { Contract } from '../modules/contracts/domain/contract.entity';
+import { ContractPeriod } from '../modules/contracts/domain/contract-period.entity';
+import { ContractPeriodDocument } from '../modules/contracts/domain/contract-period-document.entity';
+import { checklistForKind } from '../modules/contracts/domain/contract-kinds';
+import { StaffMember } from '../modules/staff/domain/staff-member.entity';
+import { StaffRequirementCheck } from '../modules/staff/domain/staff-requirement-check.entity';
+import { art12Checklist } from '../modules/staff/domain/staff-kinds';
+import { TaskAssignee } from '../modules/portfolio/domain/task-assignee.entity';
+import { RecordCodeService } from '../modules/record-codes/application/record-code.service';
+import {
+  RECORD_CODE_PREFIXES,
+  formatRecordCode,
+  type RecordCodePrefix,
+} from '../modules/record-codes/domain/record-code-prefix';
+
+/** Asigna folios TTT+AA+NNNNNN y al final alinea `record_code_sequences`. */
+class SeedCodeAllocator {
+  private readonly seq: Record<RecordCodePrefix, number> = {
+    PRY: 0,
+    TAR: 0,
+    CTR: 0,
+    PER: 0,
+    PSN: 0,
+  };
+
+  constructor(readonly year: number) {}
+
+  matches(prefix: RecordCodePrefix, code: string | null | undefined): boolean {
+    if (!code) return false;
+    const aa = String(this.year).slice(-2);
+    return new RegExp(`^${prefix}${aa}\\d{6}$`).test(code);
+  }
+
+  /** Registra un folio ya presente en BD para no reasignar el mismo correlativo. */
+  observe(prefix: RecordCodePrefix, code: string | null | undefined): void {
+    if (!this.matches(prefix, code)) return;
+    const n = parseInt(String(code).slice(-6), 10);
+    if (Number.isFinite(n) && n > this.seq[prefix]) {
+      this.seq[prefix] = n;
+    }
+  }
+
+  /** Reutiliza folio del año si ya es válido; si no, asigna el siguiente correlativo. */
+  take(prefix: RecordCodePrefix, existing?: string | null): string {
+    if (this.matches(prefix, existing)) {
+      this.observe(prefix, existing);
+      return existing as string;
+    }
+    this.seq[prefix] += 1;
+    return formatRecordCode(prefix, this.year, this.seq[prefix]);
+  }
+
+  async warmFromDatabase(): Promise<void> {
+    const persons = await AppDataSource.getRepository(Person).find({
+      select: ['code'],
+    });
+    for (const p of persons) this.observe('PSN', p.code);
+
+    const projects = await AppDataSource.getRepository(Project).find({
+      select: ['code', 'kind'],
+    });
+    for (const p of projects) {
+      if (p.kind === 'portfolio_task' || String(p.code).startsWith('TAR')) {
+        this.observe('TAR', p.code);
+      } else {
+        this.observe('PRY', p.code);
+      }
+    }
+
+    const tasks = await AppDataSource.getRepository(Task).find({
+      select: ['code'],
+    });
+    for (const t of tasks) this.observe('TAR', t.code);
+
+    const contracts = await AppDataSource.getRepository(Contract).find({
+      select: ['code'],
+    });
+    for (const c of contracts) this.observe('CTR', c.code);
+
+    const staff = await AppDataSource.getRepository(StaffMember).find({
+      select: ['code'],
+    });
+    for (const s of staff) this.observe('PER', s.code);
+  }
+
+  async sync(service: RecordCodeService): Promise<void> {
+    for (const prefix of RECORD_CODE_PREFIXES) {
+      const min = this.seq[prefix];
+      if (min > 0) {
+        await service.ensureAtLeast(prefix, this.year, min);
+      }
+    }
+  }
+}
+
+/** Prefiere fila con folio de sistema del año; si no, la primera. */
+function preferSystemCode<T extends { code: string }>(
+  rows: T[],
+  codes: SeedCodeAllocator,
+  prefix: RecordCodePrefix,
+): T | null {
+  if (!rows.length) return null;
+  return rows.find((r) => codes.matches(prefix, r.code)) ?? rows[0];
+}
 
 /** Personas seed por perfil (username = rol salvo dirección configurable). */
 const SEED_PROFILES: Array<{
@@ -27,7 +136,6 @@ const SEED_PROFILES: Array<{
   firstName: string;
   lastName: string;
   email: string;
-  code: string;
 }> = [
   {
     role: 'direccion',
@@ -35,7 +143,13 @@ const SEED_PROFILES: Array<{
     firstName: 'Dirección',
     lastName: 'DSP Parral',
     email: 'direccion@dsp.local',
-    code: 'P-DIR',
+  },
+  {
+    role: 'admin_sistema',
+    documentNumber: '11.000.000-0',
+    firstName: 'Admin',
+    lastName: 'Sistema',
+    email: 'admin_sistema@dsp.local',
   },
   {
     role: 'analisis_datos',
@@ -43,7 +157,6 @@ const SEED_PROFILES: Array<{
     firstName: 'Analista',
     lastName: 'Datos',
     email: 'analisis_datos@dsp.local',
-    code: 'P-AD',
   },
   {
     role: 'analisis_sistemas',
@@ -51,7 +164,6 @@ const SEED_PROFILES: Array<{
     firstName: 'Analista',
     lastName: 'Sistemas',
     email: 'analisis_sistemas@dsp.local',
-    code: 'P-AS',
   },
   {
     role: 'administrativo',
@@ -59,7 +171,6 @@ const SEED_PROFILES: Array<{
     firstName: 'Administrativo',
     lastName: 'Personal',
     email: 'administrativo@dsp.local',
-    code: 'P-ADM',
   },
   {
     role: 'its',
@@ -67,7 +178,6 @@ const SEED_PROFILES: Array<{
     firstName: 'Inspector',
     lastName: 'ITS',
     email: 'its@dsp.local',
-    code: 'P-ITS',
   },
   {
     role: 'prevencion',
@@ -75,7 +185,6 @@ const SEED_PROFILES: Array<{
     firstName: 'Prevención',
     lastName: 'Comunitaria',
     email: 'prevencion@dsp.local',
-    code: 'P-PRE',
   },
   {
     role: 'gestor',
@@ -83,7 +192,6 @@ const SEED_PROFILES: Array<{
     firstName: 'Gestor',
     lastName: 'Territorial',
     email: 'gestor@dsp.local',
-    code: 'P-GES',
   },
   {
     role: 'jefe_operaciones',
@@ -91,7 +199,6 @@ const SEED_PROFILES: Array<{
     firstName: 'Jefe',
     lastName: 'Operaciones',
     email: 'jefe_operaciones@dsp.local',
-    code: 'P-JOP',
   },
   {
     role: 'operador_televigilancia',
@@ -99,7 +206,6 @@ const SEED_PROFILES: Array<{
     firstName: 'Operador',
     lastName: 'Televigilancia',
     email: 'operador_televigilancia@dsp.local',
-    code: 'P-OTV',
   },
   {
     role: 'inspector',
@@ -107,7 +213,6 @@ const SEED_PROFILES: Array<{
     firstName: 'Inspector',
     lastName: 'SM Terreno',
     email: 'inspector@dsp.local',
-    code: 'P-INS',
   },
   {
     role: 'jefe_grd',
@@ -115,7 +220,6 @@ const SEED_PROFILES: Array<{
     firstName: 'Jefe',
     lastName: 'GRD',
     email: 'jefe_grd@dsp.local',
-    code: 'P-JGRD',
   },
   {
     role: 'grd',
@@ -123,7 +227,6 @@ const SEED_PROFILES: Array<{
     firstName: 'Apoyo',
     lastName: 'GRD',
     email: 'grd@dsp.local',
-    code: 'P-GRD',
   },
 ];
 
@@ -139,14 +242,16 @@ function seedPasswordFor(role: UserRole, adminPass: string): string {
   return process.env[envKey] || `${role}123`;
 }
 
-async function upsertPerson(data: {
-  documentType: string;
-  documentNumber: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  code?: string;
-}): Promise<Person> {
+async function upsertPerson(
+  data: {
+    documentType: string;
+    documentNumber: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  },
+  codes: SeedCodeAllocator,
+): Promise<Person> {
   const repo = AppDataSource.getRepository(Person);
   let person = await repo.findOne({
     where: {
@@ -154,14 +259,15 @@ async function upsertPerson(data: {
       documentNumber: data.documentNumber,
     },
   });
+  const code = codes.take('PSN', person?.code);
   if (!person) {
-    person = repo.create(data);
+    person = repo.create({ ...data, code });
   } else {
     Object.assign(person, {
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
-      code: data.code ?? person.code,
+      code,
     });
   }
   return repo.save(person);
@@ -212,6 +318,12 @@ async function seed() {
   await AppDataSource.initialize();
   console.log('[seed] connected');
 
+  const seedYear = new Date().getFullYear();
+  const codes = new SeedCodeAllocator(seedYear);
+  const recordCodes = new RecordCodeService(AppDataSource);
+  await codes.warmFromDatabase();
+  console.log(`[seed] folios TTT+AA+NNNNNN · año ${seedYear}`);
+
   // --- Identity (un usuario por perfil de app) ---
   let direccion: User | null = null;
   const seededUsernames: string[] = [];
@@ -221,14 +333,16 @@ async function seed() {
       profile.role === 'direccion' ? adminUser : (profile.username ?? profile.role);
     const email =
       profile.role === 'direccion' ? adminEmail : profile.email;
-    const person = await upsertPerson({
-      documentType: 'RUT',
-      documentNumber: profile.documentNumber,
-      firstName: profile.firstName,
-      lastName: profile.lastName,
-      email,
-      code: profile.code,
-    });
+    const person = await upsertPerson(
+      {
+        documentType: 'RUT',
+        documentNumber: profile.documentNumber,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email,
+      },
+      codes,
+    );
     const user = await upsertUser({
       personaId: person.id,
       username,
@@ -340,9 +454,17 @@ async function seed() {
   }
   console.log('[seed] plan 2027 + O1–O4');
 
-  // --- Legal ---
+  // --- Legal (Cap. 1 — catálogo; PDFs se adjuntan por API/UI) ---
   const normRepo = AppDataSource.getRepository(LegalNorm);
-  const normsData = [
+  const normsData: Array<{
+    code: string;
+    kind: string;
+    numberLabel: string;
+    shortTitle: string;
+    summary: string;
+    sortOrder: number;
+    status?: string;
+  }> = [
     {
       code: 'LEY-21802',
       kind: 'law',
@@ -353,23 +475,92 @@ async function seed() {
       sortOrder: 1,
     },
     {
+      code: 'LEY-18695',
+      kind: 'law',
+      numberLabel: 'Ley N.º 18.695',
+      shortTitle: 'Orgánica Constitucional de Municipalidades',
+      summary:
+        'Base orgánica municipal; ancla competencias y estructura que la Ley 21.802 especializa en seguridad pública.',
+      sortOrder: 2,
+    },
+    {
+      code: 'LEY-20965',
+      kind: 'law',
+      numberLabel: 'Ley N.º 20.965',
+      shortTitle: 'Sistema de Seguridad Pública',
+      summary:
+        'Marco previo de seguridad pública comunal; contexto histórico y competencias complementarias.',
+      sortOrder: 3,
+    },
+    {
       code: 'DS-MSP-97-2026',
       kind: 'decree',
       numberLabel: 'DS MSP N.º 97/2026',
       shortTitle: 'Reglamento de la Ley 21.802',
       summary:
         'Perfiles DS 97 (fiscalizador, coadyuvante, no operativo), requisitos de capacitación y nómina.',
-      sortOrder: 2,
+      sortOrder: 4,
+    },
+    {
+      code: 'LEY-19628',
+      kind: 'law',
+      numberLabel: 'Ley N.º 19.628',
+      shortTitle: 'Protección de la vida privada',
+      summary:
+        'Tratamiento de datos personales en televigilancia, alertas y registros de la Dirección.',
+      sortOrder: 5,
+    },
+    {
+      code: 'LEY-21719',
+      kind: 'law',
+      numberLabel: 'Ley N.º 21.719',
+      shortTitle: 'Protección de datos personales',
+      summary:
+        'Actualiza el régimen de datos personales aplicable a operaciones DSP y sistemas de información.',
+      sortOrder: 6,
+    },
+    {
+      code: 'BOL-18525-06',
+      kind: 'bill',
+      numberLabel: 'Boletín N.º 18.525-06',
+      shortTitle: 'Ley corta de seguridad pública (en trámite)',
+      summary:
+        'Proyecto de ley en proceso; se sigue como marco potencial sin tratarlo como vigente.',
+      sortOrder: 7,
+      status: 'in_process',
+    },
+    {
+      code: 'DE-03883-2026',
+      kind: 'decree',
+      numberLabel: 'Decreto Exento N.º 03883/2026',
+      shortTitle: 'Reglamento municipal — orgánica DSP Parral',
+      summary:
+        'Instrumento municipal vigente de orgánica; objeto de actualización (cartera PRJ-1 / OBL-ORGANICA).',
+      sortOrder: 8,
     },
   ];
 
   const normByCode: Record<string, LegalNorm> = {};
   for (const n of normsData) {
+    const status = n.status ?? 'in_force';
     let row = await normRepo.findOne({ where: { code: n.code } });
     if (!row) {
-      row = normRepo.create({ ...n, status: 'in_force' });
+      row = normRepo.create({
+        code: n.code,
+        kind: n.kind,
+        numberLabel: n.numberLabel,
+        shortTitle: n.shortTitle,
+        summary: n.summary,
+        sortOrder: n.sortOrder,
+        status,
+      });
     } else {
-      Object.assign(row, n);
+      row.kind = n.kind;
+      row.numberLabel = n.numberLabel;
+      row.shortTitle = n.shortTitle;
+      row.summary = n.summary;
+      row.sortOrder = n.sortOrder;
+      row.status = status;
     }
     row = await normRepo.save(row);
     normByCode[n.code] = row;
@@ -398,12 +589,15 @@ async function seed() {
     obl.strategicObjectives = [objectiveByCode['O1']];
   }
   obl = await oblRepo.save(obl);
-  console.log('[seed] norms + OBL-ORGANICA');
+  console.log(
+    `[seed] norms ${normsData.length} (${normsData.map((n) => n.code).join(', ')}) + OBL-ORGANICA`,
+  );
 
   // --- Portfolio (cartera Astro seguridad-2027) ---
+  // bookKey = ancla del libro (PRJ-*/TAR-*); code = folio de sistema (PRY/TAR + AA + NNNNNN).
   const projectRepo = AppDataSource.getRepository(Project);
   type SeedProject = {
-    code: string;
+    bookKey: string;
     kind: 'project' | 'portfolio_task';
     title: string;
     leadRole: string;
@@ -418,7 +612,7 @@ async function seed() {
 
   const projectsData: SeedProject[] = [
     {
-      code: 'PRJ-1',
+      bookKey: 'PRJ-1',
       kind: 'project',
       title: 'Actualización orgánica DSP',
       leadRole: 'direccion',
@@ -431,7 +625,7 @@ async function seed() {
       objectiveCodes: ['O1'],
     },
     {
-      code: 'PRJ-2',
+      bookKey: 'PRJ-2',
       kind: 'project',
       title: 'Consejo y Comité',
       leadRole: 'direccion',
@@ -442,7 +636,7 @@ async function seed() {
       objectiveCodes: ['O1'],
     },
     {
-      code: 'PRJ-3',
+      bookKey: 'PRJ-3',
       kind: 'project',
       title: 'Plan Comunal 2027',
       leadRole: 'analisis_datos',
@@ -453,7 +647,7 @@ async function seed() {
       objectiveCodes: ['O1'],
     },
     {
-      code: 'PRJ-5',
+      bookKey: 'PRJ-5',
       kind: 'project',
       title: 'Traslado Central de cámaras',
       leadRole: 'analisis_sistemas',
@@ -465,7 +659,7 @@ async function seed() {
       objectiveCodes: ['O1', 'O4'],
     },
     {
-      code: 'PRJ-6',
+      bookKey: 'PRJ-6',
       kind: 'project',
       title: 'Relicitación SUBDERE',
       leadRole: 'analisis_sistemas',
@@ -476,7 +670,7 @@ async function seed() {
       objectiveCodes: ['O4'],
     },
     {
-      code: 'PRJ-7',
+      bookKey: 'PRJ-7',
       kind: 'project',
       title: 'Televigilancia edificios',
       leadRole: 'analisis_sistemas',
@@ -487,7 +681,7 @@ async function seed() {
       objectiveCodes: ['O4'],
     },
     {
-      code: 'PRJ-8',
+      bookKey: 'PRJ-8',
       kind: 'project',
       title: 'Registro de grabaciones (EVS)',
       leadRole: 'analisis_sistemas',
@@ -499,7 +693,7 @@ async function seed() {
       objectiveCodes: ['O4', 'O1'],
     },
     {
-      code: 'PRJ-9',
+      bookKey: 'PRJ-9',
       kind: 'project',
       title: 'Integración SITIA',
       leadRole: 'analisis_sistemas',
@@ -510,7 +704,7 @@ async function seed() {
       objectiveCodes: ['O4'],
     },
     {
-      code: 'PRJ-10',
+      bookKey: 'PRJ-10',
       kind: 'project',
       title: 'Botón de pánico comerciantes',
       leadRole: 'analisis_sistemas',
@@ -521,7 +715,7 @@ async function seed() {
       objectiveCodes: ['O1', 'O4', 'O3'],
     },
     {
-      code: 'PRJ-11',
+      bookKey: 'PRJ-11',
       kind: 'project',
       title: 'Red de radiocomunicaciones',
       leadRole: 'analisis_sistemas',
@@ -532,7 +726,7 @@ async function seed() {
       objectiveCodes: ['O4'],
     },
     {
-      code: 'PRJ-12',
+      bookKey: 'PRJ-12',
       kind: 'project',
       title: 'Dotación de EPP',
       leadRole: 'administrativo',
@@ -543,7 +737,7 @@ async function seed() {
       objectiveCodes: ['O1'],
     },
     {
-      code: 'PRJ-13',
+      bookKey: 'PRJ-13',
       kind: 'project',
       title: 'Aparcadero municipal',
       leadRole: 'its',
@@ -554,7 +748,7 @@ async function seed() {
       objectiveCodes: ['O1'],
     },
     {
-      code: 'PRJ-14',
+      bookKey: 'PRJ-14',
       kind: 'project',
       title: 'Presencia territorial',
       leadRole: 'prevencion',
@@ -566,7 +760,7 @@ async function seed() {
       objectiveCodes: ['O2', 'O3', 'O4'],
     },
     {
-      code: 'PRJ-15',
+      bookKey: 'PRJ-15',
       kind: 'project',
       title: 'Encuesta de percepción',
       leadRole: 'analisis_datos',
@@ -577,7 +771,7 @@ async function seed() {
       objectiveCodes: ['O2', 'O3'],
     },
     {
-      code: 'PRJ-16',
+      bookKey: 'PRJ-16',
       kind: 'project',
       title: 'Difusión y participación',
       leadRole: 'prevencion',
@@ -588,7 +782,7 @@ async function seed() {
       objectiveCodes: ['O3'],
     },
     {
-      code: 'TAR-1',
+      bookKey: 'TAR-1',
       kind: 'portfolio_task',
       title: 'Seguridad Vibra Fest 2027',
       leadRole: 'jefe_operaciones',
@@ -601,7 +795,7 @@ async function seed() {
       objectiveCodes: ['O3', 'O4'],
     },
     {
-      code: 'TAR-2',
+      bookKey: 'TAR-2',
       kind: 'portfolio_task',
       title: 'Fiestas de las Tradiciones',
       leadRole: 'jefe_operaciones',
@@ -614,7 +808,7 @@ async function seed() {
       objectiveCodes: ['O3', 'O4'],
     },
     {
-      code: 'TAR-3',
+      bookKey: 'TAR-3',
       kind: 'portfolio_task',
       title: 'Calidad de inspector/a',
       leadRole: 'direccion',
@@ -627,18 +821,25 @@ async function seed() {
     },
   ];
 
-  const projectByCode: Record<string, Project> = {};
+  const projectByBook: Record<string, Project> = {};
   for (const p of projectsData) {
-    let row = await projectRepo.findOne({
-      where: { code: p.code },
-      relations: ['strategicObjectives'],
-    });
+    const prefix: RecordCodePrefix = p.kind === 'portfolio_task' ? 'TAR' : 'PRY';
+    let row =
+      (await projectRepo.findOne({
+        where: { title: p.title },
+        relations: ['strategicObjectives'],
+      })) ??
+      (await projectRepo.findOne({
+        where: { code: p.bookKey },
+        relations: ['strategicObjectives'],
+      }));
+    const folio = codes.take(prefix, row?.code);
     const objectives = p.objectiveCodes.map((c) => objectiveByCode[c]);
     const startsOn = p.startsOn ?? '2027-01-01';
     const endsOn = p.endsOn ?? '2027-12-31';
     if (!row) {
       row = projectRepo.create({
-        code: p.code,
+        code: folio,
         kind: p.kind,
         title: p.title,
         status: p.status ?? 'in_progress',
@@ -651,6 +852,7 @@ async function seed() {
         endsOn,
       });
     } else {
+      row.code = folio;
       row.title = p.title;
       row.kind = p.kind;
       row.leadRole = p.leadRole;
@@ -663,24 +865,35 @@ async function seed() {
       row.status = row.status || p.status || 'in_progress';
     }
     row = await projectRepo.save(row);
-    projectByCode[p.code] = row;
+    projectByBook[p.bookKey] = row;
   }
 
-  // Link obligation → PRJ-1
-  obl.projects = [projectByCode['PRJ-1']];
+  const organicaProject = projectByBook['PRJ-1'];
+  if (!organicaProject) {
+    throw new Error('[seed] missing project bookKey PRJ-1');
+  }
+
+  // Link obligation → orgánica (libro PRJ-1)
+  obl.projects = [organicaProject];
   obl.strategicObjectives = [objectiveByCode['O1']];
   await oblRepo.save(obl);
 
-  // Task under PRJ-1 + note
+  // Task under orgánica + note
   const taskRepo = AppDataSource.getRepository(Task);
-  let task = await taskRepo.findOne({
-    where: { projectId: projectByCode['PRJ-1'].id, code: 'PRJ-1-T1' },
-  });
+  const taskTitle = 'Antecedente técnico-jurídico de orgánica objetivo';
+  let task =
+    (await taskRepo.findOne({
+      where: { projectId: organicaProject.id, title: taskTitle },
+    })) ??
+    (await taskRepo.findOne({
+      where: { projectId: organicaProject.id, code: 'PRJ-1-T1' },
+    }));
+  const taskCode = codes.take('TAR', task?.code);
   if (!task) {
     task = taskRepo.create({
-      projectId: projectByCode['PRJ-1'].id,
-      code: 'PRJ-1-T1',
-      title: 'Antecedente técnico-jurídico de orgánica objetivo',
+      projectId: organicaProject.id,
+      code: taskCode,
+      title: taskTitle,
       description:
         'Compilar propuesta de estructura y funciones DSP y enviar a Jurídico.',
       objectiveText:
@@ -692,7 +905,8 @@ async function seed() {
       sortOrder: 1,
     });
   } else {
-    task.title = 'Antecedente técnico-jurídico de orgánica objetivo';
+    task.code = taskCode;
+    task.title = taskTitle;
     task.startsOn = task.startsOn ?? '2027-01-15';
     task.endsOn = task.endsOn ?? '2027-03-31';
   }
@@ -714,8 +928,392 @@ async function seed() {
   }
 
   console.log(
-    `[seed] projects ${projectsData.length} fichas (${projectsData.map((p) => p.code).join(', ')}) + task/note`,
+    `[seed] projects ${projectsData.length} fichas (${projectsData
+      .map((p) => `${p.bookKey}→${projectByBook[p.bookKey].code}`)
+      .join(', ')}) + task ${task.code}`,
   );
+
+  // --- Contracts / ITS ---
+  const itsUser = await AppDataSource.getRepository(User).findOne({
+    where: { username: 'its' },
+  });
+  if (!itsUser) {
+    throw new Error('[seed] missing its user');
+  }
+
+  const contractorRepo = AppDataSource.getRepository(Contractor);
+  let contractor = await contractorRepo.findOne({
+    where: { rut: '76.543.210-K' },
+  });
+  if (!contractor) {
+    contractor = contractorRepo.create({
+      rut: '76.543.210-K',
+      name: 'Seguridad Andina SpA',
+      email: 'contacto@seguridadandina.local',
+      phone: '+56 9 1234 5678',
+    });
+  } else {
+    contractor.name = 'Seguridad Andina SpA';
+    contractor.email = 'contacto@seguridadandina.local';
+  }
+  contractor = await contractorRepo.save(contractor);
+
+  const contractRepo = AppDataSource.getRepository(Contract);
+  const contractTitle = 'Servicio de vigilancia privada — puntos municipales';
+  const contractCandidates = await contractRepo.find({
+    where: [{ title: contractTitle }, { code: 'CTR-2027-G01' }],
+  });
+  let contract = preferSystemCode(contractCandidates, codes, 'CTR');
+  // Limpia duplicado legado si ya hay folio de sistema
+  if (contract && codes.matches('CTR', contract.code)) {
+    for (const dup of contractCandidates) {
+      if (dup.id !== contract.id && dup.code === 'CTR-2027-G01') {
+        await contractRepo.softDelete({ id: dup.id });
+      }
+    }
+  }
+  const contractCode = codes.take('CTR', contract?.code);
+  if (!contract) {
+    contract = contractRepo.create({
+      code: contractCode,
+      kind: 'guardias',
+      title: contractTitle,
+      status: 'active',
+      contractorId: contractor.id,
+      itsUserId: itsUser.id,
+      projectId: null,
+      startsOn: '2027-01-01',
+      endsOn: '2027-12-31',
+      notes: 'Seed: contrato de guardias bajo ITS.',
+    });
+  } else {
+    contract.code = contractCode;
+    contract.contractorId = contractor.id;
+    contract.itsUserId = itsUser.id;
+    contract.status = 'active';
+    contract.title = contractTitle;
+  }
+  contract = await contractRepo.save(contract);
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const periodRepo = AppDataSource.getRepository(ContractPeriod);
+  let period = await periodRepo.findOne({
+    where: { contractId: contract.id, year, month },
+  });
+  const due = new Date(Date.UTC(year, month, 0));
+  const docsDueOn = `${due.getUTCFullYear()}-${String(due.getUTCMonth() + 1).padStart(2, '0')}-${String(due.getUTCDate()).padStart(2, '0')}`;
+  if (!period) {
+    period = periodRepo.create({
+      contractId: contract.id,
+      year,
+      month,
+      status: 'docs_pending',
+      docsDueOn,
+      certifiedAt: null,
+      certificationNotes: null,
+    });
+  } else if (period.status !== 'certified') {
+    period.docsDueOn = docsDueOn;
+  }
+  period = await periodRepo.save(period);
+
+  const docRepo = AppDataSource.getRepository(ContractPeriodDocument);
+  const types = checklistForKind('guardias');
+  for (let i = 0; i < types.length; i++) {
+    const docType = types[i];
+    let doc = await docRepo.findOne({
+      where: { periodId: period.id, docType },
+    });
+    const status = i === 0 ? 'received' : 'missing';
+    if (!doc) {
+      doc = docRepo.create({
+        periodId: period.id,
+        docType,
+        status,
+        notes: null,
+      });
+    } else if (period.status !== 'certified' && doc.status === 'missing' && i === 0) {
+      doc.status = 'received';
+    }
+    await docRepo.save(doc);
+  }
+
+  console.log(
+    `[seed] contracts ${contract.code} + período ${year}-${String(month).padStart(2, '0')} (${types.length} docs)`,
+  );
+
+  // --- Staff / personal afecto ---
+  type StaffSeed = {
+    username?: string;
+    unit: string;
+    ds97Profile: string | null;
+    inspectorQuality: string;
+    approveAll?: boolean;
+    appointmentAt?: string;
+    priorToLaw?: boolean;
+    employeeNumber?: string;
+  };
+
+  const staffSeeds: StaffSeed[] = [
+    {
+      username: 'direccion',
+      unit: 'direccion',
+      ds97Profile: 'no_operativo',
+      inspectorQuality: 'none',
+    },
+    {
+      username: 'administrativo',
+      unit: 'direccion',
+      ds97Profile: 'no_operativo',
+      inspectorQuality: 'none',
+    },
+    {
+      username: 'its',
+      unit: 'operaciones',
+      ds97Profile: 'fiscalizador',
+      inspectorQuality: 'pending',
+      approveAll: true,
+      appointmentAt: '2026-09-01',
+      employeeNumber: 'DSP-ITS-01',
+    },
+    {
+      username: 'inspector',
+      unit: 'operaciones',
+      ds97Profile: 'fiscalizador',
+      inspectorQuality: 'granted',
+      approveAll: true,
+      appointmentAt: '2026-08-01',
+      priorToLaw: true,
+      employeeNumber: 'DSP-INSP-01',
+    },
+    {
+      username: 'operador_televigilancia',
+      unit: 'operaciones',
+      ds97Profile: 'coadyuvante',
+      inspectorQuality: 'none',
+    },
+    {
+      username: 'prevencion',
+      unit: 'prevencion',
+      ds97Profile: 'no_operativo',
+      inspectorQuality: 'none',
+    },
+    {
+      username: 'jefe_operaciones',
+      unit: 'operaciones',
+      ds97Profile: 'fiscalizador',
+      inspectorQuality: 'none',
+    },
+  ];
+
+  const staffRepo = AppDataSource.getRepository(StaffMember);
+  const checkRepo = AppDataSource.getRepository(StaffRequirementCheck);
+  const personRepo = AppDataSource.getRepository(Person);
+  const userRepo = AppDataSource.getRepository(User);
+  const seededStaffCodes: string[] = [];
+  let inspectorStaff: StaffMember | null = null;
+
+  for (const row of staffSeeds) {
+    const username =
+      row.username === 'direccion' ? adminUser : row.username!;
+    const user = await userRepo.findOne({ where: { username } });
+    if (!user) {
+      throw new Error(`[seed] missing user ${username} for staff`);
+    }
+    let staff = await staffRepo.findOne({
+      where: { personaId: user.personaId },
+    });
+    const folio = codes.take('PER', staff?.code);
+    if (!staff) {
+      staff = staffRepo.create({
+        code: folio,
+        personaId: user.personaId,
+        unit: row.unit,
+        ds97Profile: row.ds97Profile,
+        inspectorQualityStatus: row.inspectorQuality,
+        appointmentAt: row.appointmentAt ?? null,
+        priorToLaw: row.priorToLaw ?? false,
+        employeeNumber: row.employeeNumber ?? null,
+        workEmail: null,
+        status: 'active',
+      });
+    } else {
+      staff.code = folio;
+    }
+    staff.unit = row.unit;
+    staff.ds97Profile = row.ds97Profile;
+    staff.inspectorQualityStatus = row.inspectorQuality;
+    staff.appointmentAt = row.appointmentAt ?? staff.appointmentAt;
+    staff.priorToLaw = row.priorToLaw ?? staff.priorToLaw;
+    staff.employeeNumber = row.employeeNumber ?? staff.employeeNumber;
+    staff.status = 'active';
+    staff = await staffRepo.save(staff);
+
+    for (const requirementCode of art12Checklist()) {
+      let check = await checkRepo.findOne({
+        where: { staffId: staff.id, requirementCode },
+      });
+      const status = row.approveAll ? 'approved' : 'missing';
+      if (!check) {
+        check = checkRepo.create({
+          staffId: staff.id,
+          requirementCode,
+          status,
+          notes: null,
+        });
+      } else if (row.approveAll) {
+        check.status = 'approved';
+      }
+      await checkRepo.save(check);
+    }
+    seededStaffCodes.push(staff.code);
+    if (row.username === 'inspector') {
+      inspectorStaff = staff;
+    }
+  }
+
+  // Expediente sin cuenta de usuario (RUT distinto de humo/admin users)
+  const orphanDoc = '99.111.222-3';
+  let orphanPerson = await personRepo.findOne({
+    where: { documentNumber: orphanDoc },
+  });
+  // Migrar legado P-ORPH / RUT anterior del seed
+  if (!orphanPerson) {
+    orphanPerson = await personRepo.findOne({
+      where: { documentNumber: '99.888.777-6', firstName: 'Camila' },
+    });
+  }
+  const orphanPersonCode = codes.take('PSN', orphanPerson?.code);
+  if (!orphanPerson) {
+    orphanPerson = personRepo.create({
+      documentType: 'RUT',
+      documentNumber: orphanDoc,
+      firstName: 'Camila',
+      lastName: 'Sin Cuenta',
+      email: 'camila.sincuenta@dsp.local',
+      code: orphanPersonCode,
+    });
+  } else {
+    orphanPerson.documentNumber = orphanDoc;
+    orphanPerson.firstName = 'Camila';
+    orphanPerson.lastName = 'Sin Cuenta';
+    orphanPerson.email = 'camila.sincuenta@dsp.local';
+    orphanPerson.code = orphanPersonCode;
+  }
+  orphanPerson = await personRepo.save(orphanPerson);
+
+  let orphanStaff = await staffRepo.findOne({
+    where: { personaId: orphanPerson.id },
+  });
+  if (!orphanStaff) {
+    orphanStaff = await staffRepo.findOne({ where: { code: 'STF-ORPH' } });
+  }
+  const orphanStaffCode = codes.take('PER', orphanStaff?.code);
+  if (!orphanStaff) {
+    orphanStaff = staffRepo.create({
+      code: orphanStaffCode,
+      personaId: orphanPerson.id,
+      unit: 'operaciones',
+      ds97Profile: 'fiscalizador',
+      inspectorQualityStatus: 'none',
+      appointmentAt: '2026-10-01',
+      priorToLaw: false,
+      employeeNumber: 'DSP-NEW-01',
+      workEmail: null,
+      status: 'active',
+    });
+  }
+  orphanStaff.code = orphanStaffCode;
+  orphanStaff.personaId = orphanPerson.id;
+  orphanStaff.unit = 'operaciones';
+  orphanStaff.ds97Profile = 'fiscalizador';
+  orphanStaff.status = 'active';
+  orphanStaff = await staffRepo.save(orphanStaff);
+  for (const requirementCode of art12Checklist()) {
+    let check = await checkRepo.findOne({
+      where: { staffId: orphanStaff.id, requirementCode },
+    });
+    if (!check) {
+      check = checkRepo.create({
+        staffId: orphanStaff.id,
+        requirementCode,
+        status: 'missing',
+        notes: null,
+      });
+      await checkRepo.save(check);
+    }
+  }
+  seededStaffCodes.push(orphanStaff.code);
+
+  console.log(
+    `[seed] staff ${seededStaffCodes.length} fichas (${seededStaffCodes.join(', ')})`,
+  );
+
+  // Asignar inspector a la tarea de orgánica + nota de actividad
+  const inspectorUser = await userRepo.findOne({
+    where: { username: 'inspector' },
+  });
+  const inspStaff = inspectorStaff;
+  if (inspectorUser && inspStaff && task) {
+    const assigneeRepo = AppDataSource.getRepository(TaskAssignee);
+    // XOR person/staff: prefer staff_id for personal afecto
+    let assign = await assigneeRepo.findOne({
+      where: { taskId: task.id, staffId: inspStaff.id },
+    });
+    if (!assign) {
+      assign = await assigneeRepo.findOne({
+        where: { taskId: task.id, personId: inspectorUser.personaId },
+      });
+    }
+    if (!assign) {
+      assign = assigneeRepo.create({
+        taskId: task.id,
+        subtaskId: null,
+        personId: null,
+        staffId: inspStaff.id,
+        assignmentRole: 'executor',
+        assignedAt: new Date(),
+        unassignedAt: null,
+        assignedByUserId: direccionUser.id,
+      });
+    } else {
+      assign.staffId = inspStaff.id;
+      assign.personId = null;
+      assign.unassignedAt = null;
+      assign.assignmentRole = 'executor';
+    }
+    await assigneeRepo.save(assign);
+
+    const activityNotes = AppDataSource.getRepository(WorkNote);
+    const existingInspNote = await activityNotes.findOne({
+      where: {
+        entityType: 'task',
+        entityId: task.id,
+        authorUserId: inspectorUser.id,
+      },
+    });
+    if (!existingInspNote) {
+      await activityNotes.save(
+        activityNotes.create({
+          entityType: 'task',
+          entityId: task.id,
+          body: `Seed: revisión en terreno de la tarea ${task.code} (actividad inspector).`,
+          authorUserId: inspectorUser.id,
+        }),
+      );
+    }
+    console.log(
+      `[seed] staff activity: ${inspStaff.code} → task ${task.code} + note`,
+    );
+  }
+
+  await codes.sync(recordCodes);
+  console.log(
+    `[seed] record_code_sequences alineadas (año ${seedYear})`,
+  );
+
   console.log('[seed] done');
   await AppDataSource.destroy();
 }

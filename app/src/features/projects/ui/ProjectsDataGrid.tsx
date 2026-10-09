@@ -5,12 +5,11 @@ import { useRouter } from 'next/navigation';
 import {
   Badge,
   Card,
+  CollectionGrid,
   DataGrid,
-  NextNavProvider,
   type DataGridColumn,
 } from '@felipechandiadev/ui';
 import { useListCardsView } from '@/shared/ui/use-list-cards-view';
-import { ViewModeToggle } from '@/shared/ui/view-mode-toggle';
 
 export type ProjectRow = {
   id: string;
@@ -25,14 +24,28 @@ export type ProjectRow = {
   objectiveCodes: string[];
 };
 
-export function ProjectsDataGrid({ rows }: { rows: ProjectRow[] }) {
+type Props = {
+  rows: ProjectRow[];
+  totalRows: number;
+  limit?: number;
+};
+
+/** Columnas las fija `.dsp-portfolio-card-grid` en CSS (2 / 3 / 4). */
+const CARD_COLS = 4;
+
+export function ProjectsDataGrid({ rows, totalRows, limit = 25 }: Props) {
   const router = useRouter();
-  const { view, setView } = useListCardsView();
-  const toggle = <ViewModeToggle view={view} onChange={setView} />;
+  const { view } = useListCardsView();
 
   const columns: DataGridColumn[] = [
     { field: 'code', headerName: 'Código', width: 100, sortable: true },
-    { field: 'title', headerName: 'Título', flex: 1, minWidth: 180, sortable: true },
+    {
+      field: 'title',
+      headerName: 'Título',
+      flex: 1,
+      minWidth: 180,
+      sortable: true,
+    },
     {
       field: 'status',
       headerName: 'Estado',
@@ -57,64 +70,70 @@ export function ProjectsDataGrid({ rows }: { rows: ProjectRow[] }) {
 
   if (view === 'cards') {
     return (
-      <div className="flex flex-col gap-3">
-        <div className="flex justify-end">{toggle}</div>
-        <div className="flex flex-col gap-3 max-w-3xl">
-          {rows.length === 0 ? (
-            <p className="text-sm text-[var(--color-muted-foreground)] m-0">
-              No hay proyectos.
-            </p>
-          ) : (
-            rows.map((p) => (
-              <Card
-                key={p.id}
-                title={
-                  <Link
-                    href={`/projects/${p.code}`}
-                    className="hover:underline"
-                  >
-                    {p.code} — {p.title}
-                  </Link>
-                }
-                headerEnd={<Badge variant="secondary">{p.status}</Badge>}
-                subtitle={
-                  p.objectiveCodes?.length
-                    ? `Aporta a ${p.objectiveCodes.join(', ')}`
-                    : p.leadRole ?? undefined
-                }
+      <CollectionGrid
+        totalRows={totalRows}
+        limit={limit}
+        fillViewport
+        viewportBottomInset={16}
+        showSearch
+        showFooter
+        searchPlaceholder="Buscar proyectos…"
+        contentEmptyMessage="No hay proyectos."
+        contentGridColumns={CARD_COLS}
+        contentGridGapClassName="gap-3"
+        contentGridClassName="dsp-portfolio-card-grid"
+        contentGridItemsAlign="start"
+        data-test-id="projects-collection-grid"
+        contentItems={rows.map((p) => (
+          <Card
+            key={p.id}
+            fillHeight
+            className="dsp-portfolio-card cursor-pointer"
+            onClick={() => router.push(`/projects/${p.code}`)}
+            title={
+              <Link
+                href={`/projects/${p.code}`}
+                className="hover:underline"
+                onClick={(e) => e.stopPropagation()}
               >
-                <p className="text-sm text-[var(--color-muted-foreground)] m-0">
-                  {p.summary ?? 'Sin resumen.'}
-                </p>
-              </Card>
-            ))
-          )}
-        </div>
-      </div>
+                {p.code}
+              </Link>
+            }
+            headerEnd={<Badge variant="secondary">{p.status}</Badge>}
+            subtitle={p.title}
+          >
+            <p className="text-sm text-[var(--color-muted-foreground)] m-0 line-clamp-4">
+              {p.summary ?? 'Sin resumen.'}
+            </p>
+            {p.objectiveCodes?.length ? (
+              <p className="text-xs text-[var(--color-muted-foreground)] m-0 mt-auto pt-2">
+                {p.objectiveCodes.join(', ')}
+                {p.leadRole ? ` · ${p.leadRole}` : ''}
+              </p>
+            ) : null}
+          </Card>
+        ))}
+      />
     );
   }
 
   return (
-    <NextNavProvider>
-      <DataGrid
-        title="Proyectos"
-        columns={columns}
-        rows={rows}
-        totalRows={rows.length}
-        paginationMode="controlled"
-        page={1}
-        limit={Math.max(rows.length, 1)}
-        showFooter={false}
-        showSearch={false}
-        showSortButton={false}
-        showFilterButton={false}
-        showExportButton={false}
-        headerActions={toggle}
-        onRowClick={(row) => {
-          if (row?.code) router.push(`/projects/${row.code}`);
-        }}
-        height="auto"
-      />
-    </NextNavProvider>
+    <DataGrid
+      columns={columns}
+      rows={rows}
+      totalRows={totalRows}
+      limit={limit}
+      fillViewport
+      viewportBottomInset={16}
+      showFooter
+      showSearch
+      showSortButton={false}
+      showFilterButton={false}
+      showExportButton={false}
+      onRowClick={(row) => {
+        if (row?.code) router.push(`/projects/${row.code}`);
+      }}
+      data-test-id="projects-datagrid"
+    />
   );
 }

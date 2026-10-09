@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
@@ -8,14 +8,39 @@ import { Button, IconButton } from '@felipechandiadev/ui';
 import { NAV_SECTIONS } from '@/shared/navigation/nav-items';
 import { userRoleLabel } from '@/shared/auth/user-roles';
 import { NotificationBell } from '@/features/notifications/ui/notification-bell';
+import { UserAccountDialog } from '@/features/auth/ui/user-account-dialog';
+
+const COLLAPSE_KEY = 'dsp-sidebar-collapsed';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const pathname = usePathname();
   const { data: session } = useSession();
 
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === '1');
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   function close() {
     setOpen(false);
+  }
+
+  function toggleCollapsed() {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
   }
 
   return (
@@ -36,8 +61,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
         <span className="dsp-topbar__actions">
           <NotificationBell />
+          <IconButton
+            icon="UserCircle"
+            ariaLabel="Mi cuenta"
+            variant="neutral"
+            size="md"
+            onClick={() => setAccountOpen(true)}
+          />
         </span>
       </header>
+
+      <UserAccountDialog
+        open={accountOpen}
+        onClose={() => setAccountOpen(false)}
+      />
 
       <div
         className={`dsp-sidebar__overlay${open ? ' is-open' : ''}`}
@@ -47,26 +84,41 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="dsp-body">
         <aside
-          className={`dsp-sidebar${open ? ' is-open' : ''}`}
+          className={`dsp-sidebar${open ? ' is-open' : ''}${collapsed ? ' is-collapsed' : ''}`}
           aria-label="Navegación principal"
         >
           <div className="dsp-sidebar__head">
             <p className="dsp-sidebar__title">Menú</p>
-            <span className="dsp-sidebar__close">
-              <IconButton
-                icon="X"
-                ariaLabel="Cerrar menú"
-                variant="neutral"
-                size="sm"
-                onClick={close}
-              />
+            <span className="dsp-sidebar__head-actions">
+              <span className="dsp-sidebar__collapse">
+                <IconButton
+                  icon={collapsed ? 'PanelLeftOpen' : 'PanelLeftClose'}
+                  ariaLabel={
+                    collapsed ? 'Expandir menú' : 'Colapsar menú'
+                  }
+                  variant="neutral"
+                  size="sm"
+                  onClick={toggleCollapsed}
+                />
+              </span>
+              <span className="dsp-sidebar__close">
+                <IconButton
+                  icon="X"
+                  ariaLabel="Cerrar menú"
+                  variant="neutral"
+                  size="sm"
+                  onClick={close}
+                />
+              </span>
             </span>
           </div>
 
           <nav>
             {NAV_SECTIONS.map((section) => (
               <div key={section.id}>
-                <p className="dsp-nav__section">{section.label}</p>
+                {section.label && !collapsed ? (
+                  <p className="dsp-nav__section">{section.label}</p>
+                ) : null}
                 <ul className="dsp-nav">
                   {section.items.map((item) => {
                     const active =
@@ -79,9 +131,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           href={item.href}
                           className={`dsp-nav__link${active ? ' is-active' : ''}`}
                           onClick={close}
+                          aria-label={item.label}
+                          aria-current={active ? 'page' : undefined}
+                          data-tooltip={item.label}
+                          title={collapsed ? item.label : undefined}
                         >
                           <Icon size={18} aria-hidden />
-                          {item.label}
+                          <span className="dsp-nav__label">{item.label}</span>
                         </Link>
                       </li>
                     );
@@ -96,14 +152,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {session?.user?.username ?? '—'} ·{' '}
               {userRoleLabel(session?.user?.role)}
             </p>
-            <Button
-              type="button"
-              variant="outlined"
-              size="md"
-              onClick={() => signOut({ callbackUrl: '/login' })}
+            <span className="dsp-sidebar__logout-full">
+              <Button
+                type="button"
+                variant="outlined"
+                size="md"
+                onClick={() => signOut({ callbackUrl: '/login' })}
+              >
+                Cerrar sesión
+              </Button>
+            </span>
+            <span
+              className="dsp-sidebar__logout-icon"
+              data-tooltip="Cerrar sesión"
             >
-              Cerrar sesión
-            </Button>
+              <IconButton
+                icon="LogOut"
+                ariaLabel="Cerrar sesión"
+                variant="outlined"
+                size="sm"
+                onClick={() => signOut({ callbackUrl: '/login' })}
+              />
+            </span>
           </div>
         </aside>
 

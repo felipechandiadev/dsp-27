@@ -61,7 +61,7 @@ Todo usuario **es** una persona (`persona_id` obligatorio). Todo funcionario **e
 
 El instrumento anual guarda la **misión** del Cap. 3.1 y, cuando exista, la **visión**. Los **O1–O4** son fichas (por qué, verificación, fuera de alcance), no solo un código.
 
-La sección **Normas** cataloga el marco del Cap. 1: cada norma puede llevar el **PDF oficial**, un **análisis** de la Dirección y **obligaciones** que se vinculan a objetivos y a proyectos (matriz obligación → acción).
+La sección **Normas** cataloga el marco del Cap. 1: cada norma tiene tipo, número/rótulo y título, puede llevar el **PDF oficial** (`multimedia_assets` → `legal_norm`), un **análisis** de la Dirección y **obligaciones** que se vinculan a objetivos y a proyectos (matriz obligación → acción). La UI de adjuntos (`EntityAttachments`) se reutiliza en otras fichas documentales.
 
 ## Seguimiento, fechas, notas y objetivos
 
@@ -73,7 +73,7 @@ Tareas y subtareas pueden llevar GPS. Las visitas puerta a puerta son subtareas 
 
 ## Multimedia
 
-El archivo es uno: tabla `multimedia_assets` con vínculo polimórfico (`entity_type` + `entity_id`) para **imágenes y documentos**.
+El archivo es uno: tabla `multimedia_assets` con vínculo polimórfico (`entity_type` + `entity_id`) para **imágenes y documentos** (PDF hasta 20 MB; imágenes hasta 8 MB). Catálogo de `entity_type` acotado en el servicio.
 
 El destino de las **nuevas** subidas es **uno**: disco local **o** Cloudflare R2 (`STORAGE_DRIVER`). No se operan los dos como destino habitual a la vez. La fila guarda `storage_key` (clave lógica) y `storage_driver` (dónde quedó ese archivo), para que un cambio futuro de almacén **no cree conflicto en el esquema** ni tablas distintas. Lectura según la fila; migración de binarios opcional.
 
@@ -91,7 +91,8 @@ Catálogo canónico en código: `core/src/modules/users/domain/user-roles.ts` (e
 
 | Rol | Cargo típico | Ve y hace |
 |-----|--------------|-----------|
-| `direccion` | Director/a | Tablero, instrucciones de envío, Consejo, calidad de inspector, lectura de ITS |
+| `direccion` | Director/a | Tablero, instrucciones de envío, Consejo, calidad de inspector, lectura de ITS; administración de usuarios |
+| `admin_sistema` | Administrador/a de sistema | Cuentas de acceso (`/settings/users`): alta, perfiles, estado y reset de contraseña |
 | `analisis_datos` | Analista datos / control de gestión | Cartera, indicadores, Plan Comunal, nómina consolidada, encuesta |
 | `analisis_sistemas` | Analista TIC / televigilancia | Activos, especificaciones, recepción de compras TIC y radios |
 | `administrativo` | Administrativo/a personal y documentación | Expedientes, capacitaciones, credenciales, EPP, archivo |

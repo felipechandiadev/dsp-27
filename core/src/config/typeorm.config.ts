@@ -15,6 +15,14 @@ import { Notification } from '@modules/notifications/domain/notification.entity'
 import { NotificationDelivery } from '@modules/notifications/domain/notification-delivery.entity';
 import { NotificationOutbox } from '@modules/notifications/domain/notification-outbox.entity';
 import { TaskAssignee } from '@modules/portfolio/domain/task-assignee.entity';
+import { Contractor } from '@modules/contracts/domain/contractor.entity';
+import { Contract } from '@modules/contracts/domain/contract.entity';
+import { ContractPeriod } from '@modules/contracts/domain/contract-period.entity';
+import { ContractPeriodDocument } from '@modules/contracts/domain/contract-period-document.entity';
+import { StaffMember } from '@modules/staff/domain/staff-member.entity';
+import { StaffRequirementCheck } from '@modules/staff/domain/staff-requirement-check.entity';
+import { MultimediaAsset } from '@modules/multimedia/domain/multimedia-asset.entity';
+import { RecordCodeSequence } from '@modules/record-codes/domain/record-code-sequence.entity';
 
 export const entities = [
   Person,
@@ -32,7 +40,16 @@ export const entities = [
   NotificationDelivery,
   NotificationOutbox,
   TaskAssignee,
+  Contractor,
+  Contract,
+  ContractPeriod,
+  ContractPeriodDocument,
+  StaffMember,
+  StaffRequirementCheck,
+  MultimediaAsset,
+  RecordCodeSequence,
 ];
+
 
 export function buildTypeOrmOptions(
   config: AppConfigService,

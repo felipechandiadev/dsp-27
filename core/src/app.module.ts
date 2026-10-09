@@ -14,11 +14,16 @@ import { PortfolioModule } from './modules/portfolio/portfolio.module';
 import { MicrosoftModule } from './modules/integrations/microsoft/microsoft.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CalendarModule } from './modules/calendar/calendar.module';
+import { ContractsModule } from './modules/contracts/contracts.module';
+import { StaffModule } from './modules/staff/staff.module';
+import { MultimediaModule } from './modules/multimedia/multimedia.module';
+import { RecordCodesModule } from './modules/record-codes/record-codes.module';
 
 @Module({
   imports: [
     AppConfigModule,
     CqrsModule.forRoot(),
+    RecordCodesModule,
     TypeOrmModule.forRootAsync({
       imports: [AppConfigModule],
       inject: [AppConfigService],
@@ -34,6 +39,10 @@ import { CalendarModule } from './modules/calendar/calendar.module';
     MicrosoftModule,
     NotificationsModule,
     CalendarModule,
+    ContractsModule,
+    StaffModule,
+    MultimediaModule,
   ],
 })
 export class AppModule {}
+

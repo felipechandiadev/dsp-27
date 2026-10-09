@@ -7,6 +7,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Person } from '@modules/persons/domain/person.entity';
+import { StaffMember } from '@modules/staff/domain/staff-member.entity';
 import {
   USER_REPOSITORY,
   UserRepositoryPort,
@@ -31,6 +32,8 @@ export class AssignTaskHandler implements ICommandHandler<AssignTaskCommand> {
     private readonly users: UserRepositoryPort,
     @InjectRepository(Person)
     private readonly persons: Repository<Person>,
+    @InjectRepository(StaffMember)
+    private readonly staff: Repository<StaffMember>,
     @Inject(NOTIFICATION_PUBLISHER)
     private readonly notifications: NotificationPublisherPort,
   ) {}
@@ -48,9 +51,14 @@ export class AssignTaskHandler implements ICommandHandler<AssignTaskCommand> {
       throw new NotFoundException('Persona no encontrada');
     }
 
+    const staffRow = await this.staff.findOne({
+      where: { personaId: command.personId },
+    });
+
     const assignee = await this.portfolio.assignPersonToTask({
       taskId: command.taskId,
       personId: command.personId,
+      staffId: staffRow?.id ?? null,
       assignmentRole: command.assignmentRole,
       assignedByUserId: command.actorUserId,
     });

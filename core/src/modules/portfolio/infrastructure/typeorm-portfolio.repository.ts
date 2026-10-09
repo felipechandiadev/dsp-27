@@ -70,26 +70,35 @@ export class TypeOrmPortfolioRepository implements PortfolioRepositoryPort {
   async assignPersonToTask(input: {
     taskId: string;
     personId: string;
+    staffId?: string | null;
     assignmentRole: string;
     assignedByUserId: string;
   }): Promise<TaskAssignee> {
+    // XOR: prefer staff_id when expediente exists; otherwise person_id only.
+    const useStaffId = input.staffId ?? null;
+    const usePersonId = useStaffId ? null : input.personId;
+
     const existing = await this.assignees.findOne({
-      where: {
-        taskId: input.taskId,
-        personId: input.personId,
-        unassignedAt: IsNull(),
-      },
+      where: useStaffId
+        ? { taskId: input.taskId, staffId: useStaffId, unassignedAt: IsNull() }
+        : {
+            taskId: input.taskId,
+            personId: input.personId,
+            unassignedAt: IsNull(),
+          },
     });
     if (existing) {
       existing.assignmentRole = input.assignmentRole;
       existing.assignedByUserId = input.assignedByUserId;
+      existing.staffId = useStaffId;
+      existing.personId = usePersonId;
       return this.assignees.save(existing);
     }
     const row = this.assignees.create({
       taskId: input.taskId,
       subtaskId: null,
-      personId: input.personId,
-      staffId: null,
+      personId: usePersonId,
+      staffId: useStaffId,
       assignmentRole: input.assignmentRole,
       assignedAt: new Date(),
       unassignedAt: null,

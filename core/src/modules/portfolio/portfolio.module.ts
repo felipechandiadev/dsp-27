@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Person } from '@modules/persons/domain/person.entity';
+import { StaffMember } from '@modules/staff/domain/staff-member.entity';
 import { UsersModule } from '@modules/users/users.module';
 import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { Project } from './domain/project.entity';
@@ -22,7 +23,14 @@ import { ListTaskAssigneesHandler } from './application/handlers/list-task-assig
     CqrsModule,
     UsersModule,
     NotificationsModule,
-    TypeOrmModule.forFeature([Project, Task, WorkNote, TaskAssignee, Person]),
+    TypeOrmModule.forFeature([
+      Project,
+      Task,
+      WorkNote,
+      TaskAssignee,
+      Person,
+      StaffMember,
+    ]),
   ],
   controllers: [PortfolioController],
   providers: [

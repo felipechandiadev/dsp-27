@@ -33,6 +33,7 @@ Un usuario por perfil de app (`users.role`). Catálogo: [`user-roles.ts`](./core
 | Username | Rol | Password (default) |
 |----------|-----|--------------------|
 | `direccion` | `direccion` | `direccion123` |
+| `admin_sistema` | `admin_sistema` | `admin_sistema123` |
 | `analisis_datos` | `analisis_datos` | `analisis_datos123` |
 | `analisis_sistemas` | `analisis_sistemas` | `analisis_sistemas123` |
 | `administrativo` | `administrativo` | `administrativo123` |
