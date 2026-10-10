@@ -23,6 +23,13 @@ import { StaffMember } from '@modules/staff/domain/staff-member.entity';
 import { StaffRequirementCheck } from '@modules/staff/domain/staff-requirement-check.entity';
 import { MultimediaAsset } from '@modules/multimedia/domain/multimedia-asset.entity';
 import { RecordCodeSequence } from '@modules/record-codes/domain/record-code-sequence.entity';
+import { OperationAreaType } from '@modules/territory/domain/operation-area-type.entity';
+import { OperationArea } from '@modules/territory/domain/operation-area.entity';
+import { IncidentType } from '@modules/operational-cases/domain/incident-type.entity';
+import { OperationType } from '@modules/operational-cases/domain/operation-type.entity';
+import { Incidencia } from '@modules/operational-cases/domain/incidencia.entity';
+import { Requerimiento } from '@modules/operational-cases/domain/requerimiento.entity';
+import { FieldOperation } from '@modules/operational-cases/domain/field-operation.entity';
 
 export const entities = [
   Person,
@@ -48,6 +55,13 @@ export const entities = [
   StaffRequirementCheck,
   MultimediaAsset,
   RecordCodeSequence,
+  OperationAreaType,
+  OperationArea,
+  IncidentType,
+  OperationType,
+  Incidencia,
+  Requerimiento,
+  FieldOperation,
 ];
 
 

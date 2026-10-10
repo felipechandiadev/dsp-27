@@ -1,0 +1,11 @@
+.operation-areas-map {
+  z-index: 0;
+}
+
+.operation-areas-map .leaflet-container {
+  font: inherit;
+}
+
+.operation-areas-map .leaflet-draw-toolbar a {
+  background-color: var(--color-surface, #fff);
+}

@@ -46,6 +46,11 @@ class SeedCodeAllocator {
     CTR: 0,
     PER: 0,
     PSN: 0,
+    AOP: 0,
+    INC: 0,
+    REQ: 0,
+    OPE: 0,
+    ITY: 0,
   };
 
   constructor(readonly year: number) {}
@@ -106,6 +111,31 @@ class SeedCodeAllocator {
       select: ['code'],
     });
     for (const s of staff) this.observe('PER', s.code);
+
+    const areaRows = await AppDataSource.query<{ code: string }[]>(
+      `SELECT code FROM operation_areas WHERE deleted_at IS NULL`,
+    );
+    for (const row of areaRows) this.observe('AOP', row.code);
+
+    const incidentTypeRows = await AppDataSource.query<{ code: string }[]>(
+      `SELECT code FROM incident_types WHERE deleted_at IS NULL`,
+    );
+    for (const row of incidentTypeRows) this.observe('ITY', row.code);
+
+    const incRows = await AppDataSource.query<{ code: string }[]>(
+      `SELECT code FROM incidencias WHERE deleted_at IS NULL`,
+    );
+    for (const row of incRows) this.observe('INC', row.code);
+
+    const reqRows = await AppDataSource.query<{ code: string }[]>(
+      `SELECT code FROM requerimientos WHERE deleted_at IS NULL`,
+    );
+    for (const row of reqRows) this.observe('REQ', row.code);
+
+    const opeRows = await AppDataSource.query<{ code: string }[]>(
+      `SELECT code FROM field_operations WHERE deleted_at IS NULL`,
+    );
+    for (const row of opeRows) this.observe('OPE', row.code);
   }
 
   async sync(service: RecordCodeService): Promise<void> {
@@ -1308,6 +1338,428 @@ async function seed() {
       `[seed] staff activity: ${inspStaff.code} → task ${task.code} + note`,
     );
   }
+
+  // Áreas de operación: tipos administrables + 5 sectores de partida (Parral)
+  const areaTypeDefs: Array<{
+    code: string;
+    name: string;
+    description: string;
+    color: string;
+    sortOrder: number;
+  }> = [
+    {
+      code: 'territorio',
+      name: 'Territorio',
+      description: 'División mayor de intervención DSP',
+      color: '#1e73ae',
+      sortOrder: 10,
+    },
+    {
+      code: 'sector',
+      name: 'Sector',
+      description: 'Sector de prevención / rondas (PRJ-14)',
+      color: '#c45c26',
+      sortOrder: 20,
+    },
+    {
+      code: 'barrio',
+      name: 'Barrio',
+      description: 'Subdivisión dentro de un sector',
+      color: '#2d6a4f',
+      sortOrder: 30,
+    },
+  ];
+
+  const typeIdByCode = new Map<string, string>();
+  for (const def of areaTypeDefs) {
+    const existing = await AppDataSource.query<
+      Array<{ id: string }>
+    >(
+      `SELECT id FROM operation_area_types WHERE code = $1 AND deleted_at IS NULL LIMIT 1`,
+      [def.code],
+    );
+    if (existing[0]) {
+      await AppDataSource.query(
+        `
+        UPDATE operation_area_types
+        SET name = $2, description = $3, color = $4, sort_order = $5,
+            status = 'active', updated_at = now()
+        WHERE id = $1
+        `,
+        [existing[0].id, def.name, def.description, def.color, def.sortOrder],
+      );
+      typeIdByCode.set(def.code, existing[0].id);
+    } else {
+      const inserted = await AppDataSource.query<
+        Array<{ id: string }>
+      >(
+        `
+        INSERT INTO operation_area_types (
+          code, name, description, color, sort_order, status
+        ) VALUES ($1, $2, $3, $4, $5, 'active')
+        RETURNING id
+        `,
+        [def.code, def.name, def.description, def.color, def.sortOrder],
+      );
+      typeIdByCode.set(def.code, inserted[0].id);
+    }
+  }
+  console.log(
+    `[seed] operation_area_types: ${[...typeIdByCode.keys()].join(', ')}`,
+  );
+
+  /** Polígono aproximado centrado en (lng, lat) — anillo cerrado GeoJSON. */
+  function boxAround(
+    lng: number,
+    lat: number,
+    dLng = 0.008,
+    dLat = 0.006,
+  ): { type: 'Polygon'; coordinates: number[][][] } {
+    const ring = [
+      [lng - dLng, lat - dLat],
+      [lng + dLng, lat - dLat],
+      [lng + dLng, lat + dLat],
+      [lng - dLng, lat + dLat],
+      [lng - dLng, lat - dLat],
+    ];
+    return { type: 'Polygon', coordinates: [ring] };
+  }
+
+  const sectorTypeId = typeIdByCode.get('sector');
+  if (!sectorTypeId) {
+    throw new Error('[seed] falta tipo sector');
+  }
+
+  const sectorSeeds: Array<{
+    name: string;
+    lng: number;
+    lat: number;
+  }> = [
+    { name: 'Plaza de Armas', lng: -71.8265, lat: -36.1415 },
+    { name: 'Catillo', lng: -71.838, lat: -36.148 },
+    { name: 'Villa San Pedro', lng: -71.815, lat: -36.135 },
+    { name: 'Palma Rosa', lng: -71.845, lat: -36.132 },
+    { name: 'Terminal de Buses', lng: -71.82, lat: -36.155 },
+  ];
+
+  const seededAreaCodes: string[] = [];
+  for (const sector of sectorSeeds) {
+    const existing = await AppDataSource.query<
+      Array<{ id: string; code: string }>
+    >(
+      `
+      SELECT id, code FROM operation_areas
+      WHERE name = $1 AND type_id = $2 AND deleted_at IS NULL
+      LIMIT 1
+      `,
+      [sector.name, sectorTypeId],
+    );
+    const code = codes.take('AOP', existing[0]?.code);
+    const geometry = boxAround(sector.lng, sector.lat);
+    if (existing[0]) {
+      await AppDataSource.query(
+        `
+        UPDATE operation_areas
+        SET code = $2, name = $3, type_id = $4, parent_id = NULL,
+            geom = ST_SetSRID(ST_GeomFromGeoJSON($5), 4326)::geography,
+            status = 'active', notes = $6, updated_at = now()
+        WHERE id = $1
+        `,
+        [
+          existing[0].id,
+          code,
+          sector.name,
+          sectorTypeId,
+          JSON.stringify(geometry),
+          'Seed PRJ-14 — polígono aproximado Parral',
+        ],
+      );
+    } else {
+      await AppDataSource.query(
+        `
+        INSERT INTO operation_areas (
+          code, name, type_id, parent_id, geom, status, notes
+        ) VALUES (
+          $1, $2, $3, NULL,
+          ST_SetSRID(ST_GeomFromGeoJSON($4), 4326)::geography,
+          'active', $5
+        )
+        `,
+        [
+          code,
+          sector.name,
+          sectorTypeId,
+          JSON.stringify(geometry),
+          'Seed PRJ-14 — polígono aproximado Parral',
+        ],
+      );
+    }
+    seededAreaCodes.push(code);
+  }
+  console.log(
+    `[seed] operation_areas sectores: ${seededAreaCodes.join(', ')}`,
+  );
+
+  // Flujo operativo: catálogos + casos demo
+  const incidentTypeDefs = [
+    { code: 'ruido', name: 'Ruido molesto', sortOrder: 10 },
+    { code: 'consumo_alcohol', name: 'Consumo de alcohol en vía pública', sortOrder: 20 },
+    { code: 'riña', name: 'Riña / altercado', sortOrder: 30 },
+    { code: 'daño_bienes', name: 'Daño a bienes públicos', sortOrder: 40 },
+    { code: 'comercio_ambulante', name: 'Comercio ambulante irregular', sortOrder: 50 },
+  ];
+  const incidentTypeIds = new Map<string, string>();
+  for (const def of incidentTypeDefs) {
+    const existing = await AppDataSource.query<Array<{ id: string }>>(
+      `SELECT id FROM incident_types WHERE code = $1 AND deleted_at IS NULL LIMIT 1`,
+      [def.code],
+    );
+    if (existing[0]) {
+      await AppDataSource.query(
+        `UPDATE incident_types SET name = $2, sort_order = $3, status = 'active', updated_at = now() WHERE id = $1`,
+        [existing[0].id, def.name, def.sortOrder],
+      );
+      incidentTypeIds.set(def.code, existing[0].id);
+    } else {
+      const inserted = await AppDataSource.query<Array<{ id: string }>>(
+        `INSERT INTO incident_types (code, name, sort_order, status) VALUES ($1, $2, $3, 'active') RETURNING id`,
+        [def.code, def.name, def.sortOrder],
+      );
+      incidentTypeIds.set(def.code, inserted[0].id);
+    }
+  }
+
+  const operationTypeDefs = [
+    { code: 'ronda', name: 'Ronda preventiva', sortOrder: 10 },
+    { code: 'fiscalizacion', name: 'Fiscalización en terreno', sortOrder: 20 },
+    { code: 'mediacion', name: 'Mediación / orientación', sortOrder: 30 },
+    { code: 'apoyo_evento', name: 'Apoyo a evento', sortOrder: 40 },
+  ];
+  const operationTypeIds = new Map<string, string>();
+  for (const def of operationTypeDefs) {
+    const existing = await AppDataSource.query<Array<{ id: string }>>(
+      `SELECT id FROM operation_types WHERE code = $1 AND deleted_at IS NULL LIMIT 1`,
+      [def.code],
+    );
+    if (existing[0]) {
+      await AppDataSource.query(
+        `UPDATE operation_types SET name = $2, sort_order = $3, status = 'active', updated_at = now() WHERE id = $1`,
+        [existing[0].id, def.name, def.sortOrder],
+      );
+      operationTypeIds.set(def.code, existing[0].id);
+    } else {
+      const inserted = await AppDataSource.query<Array<{ id: string }>>(
+        `INSERT INTO operation_types (code, name, sort_order, status) VALUES ($1, $2, $3, 'active') RETURNING id`,
+        [def.code, def.name, def.sortOrder],
+      );
+      operationTypeIds.set(def.code, inserted[0].id);
+    }
+  }
+
+  const plazaArea = await AppDataSource.query<Array<{ id: string }>>(
+    `SELECT id FROM operation_areas WHERE name = 'Plaza de Armas' AND deleted_at IS NULL LIMIT 1`,
+  );
+  const plazaAreaId = plazaArea[0]?.id ?? null;
+  const ruidoTypeId = incidentTypeIds.get('ruido')!;
+  const rinaTypeId = incidentTypeIds.get('riña')!;
+  const rondaOpTypeId = operationTypeIds.get('ronda')!;
+  const fiscalOpTypeId = operationTypeIds.get('fiscalizacion')!;
+
+  async function upsertIncidencia(seedKey: string, data: {
+    title: string;
+    descripcion: string;
+    incidentTypeId: string;
+    status: string;
+  }): Promise<{ id: string; code: string }> {
+    const existing = await AppDataSource.query<
+      Array<{ id: string; code: string }>
+    >(
+      `SELECT id, code FROM incidencias WHERE title = $1 AND deleted_at IS NULL LIMIT 1`,
+      [data.title],
+    );
+    const code = codes.take('INC', existing[0]?.code);
+    if (existing[0]) {
+      await AppDataSource.query(
+        `UPDATE incidencias SET code = $2, status = $3, title = $4, descripcion = $5,
+         incident_type_id = $6, area_id = $7, updated_at = now() WHERE id = $1`,
+        [
+          existing[0].id,
+          code,
+          data.status,
+          data.title,
+          data.descripcion,
+          data.incidentTypeId,
+          plazaAreaId,
+        ],
+      );
+      return { id: existing[0].id, code };
+    }
+    const inserted = await AppDataSource.query<Array<{ id: string }>>(
+      `INSERT INTO incidencias (
+        code, status, title, descripcion, incident_type_id, area_id,
+        ingress_channel, registration_origin
+      ) VALUES ($1, $2, $3, $4, $5, $6, 'central', 'dispatch_entry') RETURNING id`,
+      [
+        code,
+        data.status,
+        data.title,
+        data.descripcion,
+        data.incidentTypeId,
+        plazaAreaId,
+      ],
+    );
+    return { id: inserted[0].id, code };
+  }
+
+  const inc1 = await upsertIncidencia('inc1', {
+    title: 'Ruido en Plaza de Armas',
+    descripcion: 'Seed: denuncia de ruido nocturno cerca de la plaza.',
+    incidentTypeId: ruidoTypeId,
+    status: 'sin_verificar',
+  });
+  const inc2 = await upsertIncidencia('inc2', {
+    title: 'Altercado en Terminal',
+    descripcion: 'Seed: altercado verbal en acceso al terminal.',
+    incidentTypeId: rinaTypeId,
+    status: 'verificada',
+  });
+
+  async function upsertReq(titleKey: string, data: {
+    descripcion: string;
+    prioridad: string;
+    status: string;
+    incidenciaId: string | null;
+  }): Promise<{ id: string; code: string }> {
+    const existing = await AppDataSource.query<
+      Array<{ id: string; code: string }>
+    >(
+      `SELECT id, code FROM requerimientos WHERE descripcion = $1 AND deleted_at IS NULL LIMIT 1`,
+      [data.descripcion],
+    );
+    const code = codes.take('REQ', existing[0]?.code);
+    if (existing[0]) {
+      await AppDataSource.query(
+        `UPDATE requerimientos SET code = $2, status = $3, prioridad = $4, incidencia_id = $5,
+         area_id = $6, updated_at = now() WHERE id = $1`,
+        [
+          existing[0].id,
+          code,
+          data.status,
+          data.prioridad,
+          data.incidenciaId,
+          plazaAreaId,
+        ],
+      );
+      return { id: existing[0].id, code };
+    }
+    const inserted = await AppDataSource.query<Array<{ id: string }>>(
+      `INSERT INTO requerimientos (
+        code, status, prioridad, descripcion, area_id, incidencia_id
+      ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+      [
+        code,
+        data.status,
+        data.prioridad,
+        data.descripcion,
+        plazaAreaId,
+        data.incidenciaId,
+      ],
+    );
+    return { id: inserted[0].id, code };
+  }
+
+  const req1 = await upsertReq('req1', {
+    descripcion: 'Seed: solicitud de ronda por ruido en Plaza de Armas.',
+    prioridad: 'P1',
+    status: 'en_gestion',
+    incidenciaId: inc1.id,
+  });
+  await AppDataSource.query(
+    `UPDATE incidencias SET requerimiento_id = $2, updated_at = now() WHERE id = $1`,
+    [inc1.id, req1.id],
+  );
+  const req2 = await upsertReq('req2', {
+    descripcion: 'Seed: solicitud de orientación en Villa San Pedro (sin incidencia).',
+    prioridad: 'P2',
+    status: 'ingresado',
+    incidenciaId: null,
+  });
+
+  async function upsertOp(briefing: string, data: {
+    status: string;
+    triggerType: string;
+    operationTypeId: string;
+    requerimientoId: string | null;
+    incidenciaId: string | null;
+    prioridad: string;
+  }): Promise<string> {
+    const existing = await AppDataSource.query<
+      Array<{ id: string; code: string }>
+    >(
+      `SELECT id, code FROM field_operations WHERE briefing = $1 AND deleted_at IS NULL LIMIT 1`,
+      [briefing],
+    );
+    const code = codes.take('OPE', existing[0]?.code);
+    if (existing[0]) {
+      await AppDataSource.query(
+        `UPDATE field_operations SET code = $2, status = $3, trigger_type = $4, prioridad = $5,
+         operation_type_id = $6, requerimiento_id = $7, incidencia_id = $8, area_id = $9,
+         briefing = $10, updated_at = now() WHERE id = $1`,
+        [
+          existing[0].id,
+          code,
+          data.status,
+          data.triggerType,
+          data.prioridad,
+          data.operationTypeId,
+          data.requerimientoId,
+          data.incidenciaId,
+          plazaAreaId,
+          briefing,
+        ],
+      );
+      return code;
+    }
+    await AppDataSource.query(
+      `INSERT INTO field_operations (
+        code, status, trigger_type, prioridad, briefing, operation_type_id,
+        requerimiento_id, incidencia_id, area_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        code,
+        data.status,
+        data.triggerType,
+        data.prioridad,
+        briefing,
+        data.operationTypeId,
+        data.requerimientoId,
+        data.incidenciaId,
+        plazaAreaId,
+      ],
+    );
+    return code;
+  }
+
+  const ope1 = await upsertOp('Seed: ronda por ruido Plaza de Armas', {
+    status: 'asignada',
+    triggerType: 'requerimiento',
+    operationTypeId: rondaOpTypeId,
+    requerimientoId: req1.id,
+    incidenciaId: inc1.id,
+    prioridad: 'P1',
+  });
+  const ope2 = await upsertOp('Seed: fiscalización Terminal (desde incidencia)', {
+    status: 'en_traslado',
+    triggerType: 'incidencia',
+    operationTypeId: fiscalOpTypeId,
+    requerimientoId: null,
+    incidenciaId: inc2.id,
+    prioridad: 'P2',
+  });
+
+  console.log(
+    `[seed] operational-cases: Inc ${inc1.code},${inc2.code}; Req ${req1.code},${req2.code}; Op ${ope1},${ope2}`,
+  );
 
   await codes.sync(recordCodes);
   console.log(

@@ -35,6 +35,8 @@ La numeración de cartera es la del libro: **PRJ-1 a PRJ-3 y PRJ-5 a PRJ-16** (n
 | ITS | Contratos vigentes: SLA, incidencias, actas, informes | Guardias, parquímetros, PRJ-13 |
 | Licitaciones | Especificación técnica, bases, llamado, adjudicación, recepción | Ley 19.886; PRJ con compra |
 | Prevención | Sectores, rondas puerta a puerta, instrumento, difusión | PRJ-14, PRJ-15, PRJ-16 |
+| Triage | Incidencias, requerimientos y despachos de campo (`/triage`) | [13-flujo-operativo](./13-flujo-operativo.md) |
+| Solicitudes | Ventanilla única (`/requests`) | Placeholder |
 | Activos | Catastro de cámaras, radios, EPP, puntos SUBDERE | Arts. 5° y 19°, PRJ-11, PRJ-12 |
 | Consejo y eventos | Sesiones, asistencia, acuerdos; planes de Vibra Fest y Tradiciones | PRJ-2, TAR-1, TAR-2 |
 | Alertas | Plazos, incidencias y avisos en tiempo real | WebSocket |

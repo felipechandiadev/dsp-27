@@ -116,7 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav>
             {NAV_SECTIONS.map((section) => (
               <div key={section.id}>
-                {section.label && !collapsed ? (
+                {section.label ? (
                   <p className="dsp-nav__section">{section.label}</p>
                 ) : null}
                 <ul className="dsp-nav">
@@ -133,10 +133,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           onClick={close}
                           aria-label={item.label}
                           aria-current={active ? 'page' : undefined}
-                          data-tooltip={item.label}
                           title={collapsed ? item.label : undefined}
                         >
-                          <Icon size={18} aria-hidden />
+                          <Icon size={18} aria-hidden className="dsp-nav__icon" />
                           <span className="dsp-nav__label">{item.label}</span>
                         </Link>
                       </li>
@@ -164,7 +163,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
             <span
               className="dsp-sidebar__logout-icon"
-              data-tooltip="Cerrar sesión"
+              title={collapsed ? 'Cerrar sesión' : undefined}
             >
               <IconButton
                 icon="LogOut"

@@ -152,9 +152,11 @@ Módulos `contracts` y `procurement` (PRJ-13 + ITS; ET de PRJ-5; alertas de inci
 
 ## Paso 12 — Territorio y activos con PostGIS
 
-Sectores PRJ-14; visitas = subtareas con GPS; activos con Point.
+Áreas de operación (`operation_area_types` + `operation_areas` con polígono PostGIS), UI `/areas` (tabs Áreas | Tipos) y Leaflet; ver [12-areas-operacion](./12-areas-operacion.md). Visitas GPS → `ST_Covers` y activos con Point quedan para una iteración posterior.
 
-**Listo cuando:** visita en Plaza de Armas entra en el polígono del sector (`ST_Covers`).
+**Listo cuando (MVP áreas):** seed de tipos + 5 sectores Parral; API territory con GeoJSON; mapa permite dibujar/guardar un sector. **Listo cuando (visitas):** visita en Plaza de Armas entra en el polígono del sector (`ST_Covers`).
+
+Tras áreas: **flujo operativo** (`incidencias` / `requerimientos` / `field_operations`) y UI Triage en `/triage` — ver [13-flujo-operativo](./13-flujo-operativo.md).
 
 ## Paso 13 — App Next (mobile first)
 

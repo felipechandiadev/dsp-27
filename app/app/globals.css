@@ -431,10 +431,11 @@ main.dsp-shell {
   background: var(--color-surface);
   border-right: 1px solid var(--color-border);
   transform: translateX(-105%);
-  transition: transform 0.2s ease, width 0.2s ease;
+  transition: transform 0.2s ease, width 0.22s ease;
   display: flex;
   flex-direction: column;
   padding: 0.75rem 0 1rem;
+  overflow: hidden;
 }
 
 .dsp-sidebar.is-open {
@@ -443,6 +444,12 @@ main.dsp-shell {
 
 .dsp-sidebar.is-collapsed {
   width: var(--app-sidebar-width-collapsed);
+  overflow: hidden;
+}
+
+.dsp-sidebar.is-collapsed .dsp-nav {
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .dsp-sidebar__overlay {
@@ -465,14 +472,10 @@ main.dsp-shell {
   align-items: center;
   justify-content: space-between;
   gap: 0.25rem;
-  padding: 0.25rem 0.75rem 0.75rem;
+  padding: 0.25rem 0.5rem 0.75rem;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 0.5rem;
-}
-
-.dsp-sidebar.is-collapsed .dsp-sidebar__head {
-  justify-content: center;
-  padding-inline: 0.35rem;
+  min-height: 2.5rem;
 }
 
 .dsp-sidebar__title {
@@ -482,10 +485,17 @@ main.dsp-shell {
   color: var(--color-foreground);
   min-width: 0;
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.15s ease;
 }
 
 .dsp-sidebar.is-collapsed .dsp-sidebar__title {
-  display: none;
+  opacity: 0;
+  width: 0;
+  flex: 0;
+  pointer-events: none;
 }
 
 .dsp-sidebar__head-actions {
@@ -503,6 +513,7 @@ main.dsp-shell {
   list-style: none;
   margin: 0;
   padding: 0 0.5rem;
+  overflow-x: hidden;
   overflow-y: auto;
   flex: 1;
 }
@@ -514,13 +525,28 @@ main.dsp-shell {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  height: auto;
+  opacity: 1;
+  transition: opacity 0.12s ease;
+}
+
+.dsp-sidebar.is-collapsed .dsp-nav__section {
+  opacity: 0;
+  height: 0;
+  margin: 0;
+  pointer-events: none;
 }
 
 .dsp-nav__link {
+  position: relative;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: var(--space-2, 0.5rem);
   width: 100%;
+  /* Padding fijo: el icono no se mueve al colapsar */
   padding: 0.5rem 0.65rem;
   border-radius: 0.5rem;
   color: var(--color-foreground);
@@ -530,34 +556,34 @@ main.dsp-shell {
   background: transparent;
   text-align: left;
   cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-.dsp-sidebar.is-collapsed .dsp-nav {
-  padding-inline: 0.35rem;
-  overflow: visible;
+.dsp-nav__label {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.12s ease;
 }
 
-.dsp-sidebar.is-collapsed {
-  overflow: visible;
+/* Fuera del flujo: no ensancha el link ni el hover past el borde derecho */
+.dsp-sidebar.is-collapsed .dsp-nav__label {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .dsp-sidebar.is-collapsed .dsp-nav__link {
-  position: relative;
-  justify-content: center;
-  padding: 0.55rem 0.35rem;
-  gap: 0;
-}
-
-.dsp-sidebar.is-collapsed .dsp-nav__label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
+  max-width: 100%;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+  gap: 0;
 }
 
 /* Activo en colapsado: rail + icono, sin fondo */
@@ -572,44 +598,12 @@ main.dsp-shell {
   color: var(--color-active);
 }
 
-.dsp-sidebar.is-collapsed .dsp-nav__link.is-active svg {
+.dsp-sidebar.is-collapsed .dsp-nav__link.is-active .dsp-nav__icon {
   opacity: 1;
   color: var(--color-primary);
 }
 
-/* Tooltip al hover (sidebar colapsada) */
-.dsp-sidebar.is-collapsed .dsp-nav__link[data-tooltip]::after,
-.dsp-sidebar.is-collapsed .dsp-sidebar__logout-icon[data-tooltip]::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: calc(100% + 0.55rem);
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 60;
-  padding: 0.35rem 0.55rem;
-  border-radius: 0.4rem;
-  background: color-mix(in srgb, var(--color-foreground) 92%, transparent);
-  color: var(--color-surface);
-  font-size: 0.75rem;
-  font-weight: var(--font-weight-medium);
-  line-height: 1.2;
-  white-space: nowrap;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 18%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.12s ease;
-}
-
-.dsp-sidebar.is-collapsed .dsp-nav__link[data-tooltip]:hover::after,
-.dsp-sidebar.is-collapsed .dsp-nav__link[data-tooltip]:focus-visible::after,
-.dsp-sidebar.is-collapsed .dsp-sidebar__logout-icon[data-tooltip]:hover::after,
-.dsp-sidebar.is-collapsed .dsp-sidebar__logout-icon[data-tooltip]:focus-within::after {
-  opacity: 1;
-}
-
-.dsp-sidebar.is-collapsed .dsp-sidebar__logout-icon {
-  position: relative;
-}
+/* Tooltip nativo vía title= en AppShell; sin ::after que cruce el borde */
 
 .dsp-nav__link:hover {
   background: var(--color-muted);
@@ -628,42 +622,65 @@ main.dsp-shell {
   color: var(--color-active);
 }
 
+.dsp-nav__icon,
 .dsp-nav__link svg {
   flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
   color: currentColor;
   opacity: 0.85;
 }
 
+.dsp-nav__link.is-active .dsp-nav__icon,
 .dsp-nav__link.is-active svg {
   opacity: 1;
 }
 
 .dsp-sidebar__foot {
-  padding: 0.75rem;
+  padding: 0.75rem 0.5rem;
   border-top: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.dsp-sidebar.is-collapsed .dsp-sidebar__foot {
-  padding: 0.5rem 0.35rem;
-  align-items: center;
+  align-items: stretch;
+  overflow: hidden;
 }
 
 .dsp-sidebar__user {
   font-size: 0.85rem;
   color: var(--color-muted-foreground);
-  padding: 0 0.25rem;
+  padding: 0 0.65rem;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.12s ease;
 }
 
-.dsp-sidebar.is-collapsed .dsp-sidebar__user,
+.dsp-sidebar.is-collapsed .dsp-sidebar__user {
+  opacity: 0;
+  height: 0;
+  padding: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+.dsp-sidebar__logout-full {
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.12s ease;
+}
+
 .dsp-sidebar.is-collapsed .dsp-sidebar__logout-full {
-  display: none;
+  opacity: 0;
+  height: 0;
+  pointer-events: none;
 }
 
 .dsp-sidebar__logout-icon {
   display: none;
+  /* Misma sangría que los iconos del nav */
+  margin-inline-start: 0.15rem;
 }
 
 .dsp-sidebar.is-collapsed .dsp-sidebar__logout-icon {

@@ -12,6 +12,7 @@ import {
   Mail,
   FileText,
   Inbox,
+  Columns3,
   Settings,
 } from 'lucide-react';
 
@@ -42,8 +43,9 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: '/mail', label: 'Correo', icon: Mail },
       { href: '/contracts', label: 'Contratos', icon: FileText },
       { href: '/staff', label: 'Personal y nómina', icon: Users },
-      { href: '/prevention', label: 'Prevención', icon: MapPinned },
-      { href: '/solicitudes', label: 'Solicitudes', icon: Inbox },
+      { href: '/areas', label: 'Áreas de operación', icon: MapPinned },
+      { href: '/triage', label: 'Triage', icon: Columns3 },
+      { href: '/requests', label: 'Solicitudes', icon: Inbox },
       { href: '/notifications', label: 'Notificaciones', icon: Bell },
       { href: '/settings', label: 'Ajustes', icon: Settings },
     ],

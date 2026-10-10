@@ -1,0 +1,196 @@
+/* Triage cards — patrón Nexo (unidad expandible + header folio) */
+
+.ops-triage {
+  --ops-card-bg: color-mix(in srgb, var(--color-surface, #fff) 92%, #e8eef2);
+  --ops-card-border: color-mix(in srgb, var(--color-border, #c5d0d8) 80%, transparent);
+  --ops-card-shadow: 0 1px 4px rgba(11, 16, 32, 0.04);
+  --ops-accent: var(--color-secondary, #1e73ae);
+  --ops-accent-dim: color-mix(in srgb, var(--color-secondary, #1e73ae) 12%, transparent);
+  --ops-text-muted: var(--color-muted-foreground, #4a5864);
+}
+
+.ops-board-wrap {
+  position: relative;
+}
+
+.ops-triage-connector {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  overflow: hidden;
+  color: var(--color-primary, #0b3d5c);
+}
+
+.ops-triage-connector-path {
+  transition: opacity 0.15s ease;
+}
+
+@media (max-width: 900px) {
+  .ops-triage-connector {
+    display: none;
+  }
+}
+
+.ops-triage-card-unit {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: var(--ops-card-bg);
+  border: 1px solid var(--ops-card-border);
+  box-shadow: var(--ops-card-shadow);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.ops-triage-card-unit--focus {
+  border-color: var(--color-primary, #0b3d5c);
+  box-shadow:
+    var(--ops-card-shadow),
+    0 0 0 2px color-mix(in srgb, var(--color-primary, #0b3d5c) 55%, transparent);
+}
+
+.ops-triage-card-unit--linked:not(.ops-triage-card-unit--focus) {
+  border-color: color-mix(
+    in srgb,
+    var(--color-primary, #0b3d5c) 45%,
+    var(--ops-card-border)
+  );
+  background: color-mix(in srgb, var(--color-primary, #0b3d5c) 5%, var(--ops-card-bg));
+}
+
+.ops-triage-card-unit:not(.ops-triage-card-unit--focus):hover {
+  border-color: var(--color-primary, #0b3d5c);
+  box-shadow:
+    var(--ops-card-shadow),
+    0 0 0 2px color-mix(in srgb, var(--color-primary, #0b3d5c) 35%, transparent);
+}
+
+.ops-triage-card-unit .fs-card {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ops-triage-card-unit .fs-card.fs-card--clickable {
+  cursor: pointer;
+}
+
+.ops-triage-card-unit .fs-card__header {
+  padding: 0.35rem 0.55rem 0.35rem 0.35rem;
+  background: linear-gradient(
+    90deg,
+    var(--ops-accent-dim) 0%,
+    transparent 65%
+  );
+  border-bottom: 1px solid var(--ops-card-border);
+  align-items: center;
+}
+
+.ops-triage-card-unit .fs-card__title {
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: none;
+  line-height: 1;
+  color: inherit;
+  margin: 0;
+}
+
+.ops-triage-card-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ops-triage-card-folio {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--ops-accent);
+}
+
+.ops-triage-card-unit .fs-card__subtitle {
+  margin: 0.15rem 0 0 1.85rem;
+  font-size: 0.65rem;
+  line-height: 1;
+  color: var(--ops-text-muted);
+}
+
+.ops-triage-card-unit .fs-card__content {
+  padding: 0.5rem 0.65rem 0.55rem;
+}
+
+.ops-triage-card-unit__detail {
+  border-top: 1px solid var(--ops-card-border);
+  padding: 0.65rem;
+  display: grid;
+  gap: 0.55rem;
+  max-height: min(60vh, 32rem);
+  overflow: auto;
+  background: color-mix(in srgb, var(--color-surface, #fff) 70%, transparent);
+}
+
+.ops-triage-summary {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--color-foreground, #12181c);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ops-triage-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.ops-triage-priority {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.ops-triage-priority--P0 {
+  border-color: #b91c1c !important;
+  color: #b91c1c;
+}
+
+.ops-triage-priority--P1 {
+  border-color: #c2410c !important;
+  color: #c2410c;
+}
+
+.ops-triage-priority--P2 {
+  border-color: #1e73ae !important;
+  color: #1e73ae;
+}
+
+.ops-triage-priority--P3 {
+  border-color: #64748b !important;
+  color: #64748b;
+}
+
+.ops-triage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ops-triage-edit {
+  display: grid;
+  gap: 0.5rem;
+}

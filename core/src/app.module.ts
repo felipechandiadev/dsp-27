@@ -18,6 +18,8 @@ import { ContractsModule } from './modules/contracts/contracts.module';
 import { StaffModule } from './modules/staff/staff.module';
 import { MultimediaModule } from './modules/multimedia/multimedia.module';
 import { RecordCodesModule } from './modules/record-codes/record-codes.module';
+import { TerritoryModule } from './modules/territory/territory.module';
+import { OperationalCasesModule } from './modules/operational-cases/operational-cases.module';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { RecordCodesModule } from './modules/record-codes/record-codes.module';
     ContractsModule,
     StaffModule,
     MultimediaModule,
+    TerritoryModule,
+    OperationalCasesModule,
   ],
 })
 export class AppModule {}

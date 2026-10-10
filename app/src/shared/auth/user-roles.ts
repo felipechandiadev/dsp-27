@@ -47,6 +47,67 @@ export function canAdminUsers(role: string | undefined | null): boolean {
   return (USER_ADMIN_ROLES as readonly string[]).includes(role);
 }
 
+/** Roles que pueden crear/editar áreas de operación y tipos. */
+export const TERRITORY_WRITE_ROLES: readonly UserRole[] = [
+  'direccion',
+  'prevencion',
+  'administrativo',
+];
+
+export function canWriteTerritory(role: string | undefined | null): boolean {
+  if (!role) return false;
+  return (TERRITORY_WRITE_ROLES as readonly string[]).includes(role);
+}
+
+export const OPS_CREATE_ROLES: readonly UserRole[] = [
+  'direccion',
+  'prevencion',
+  'jefe_operaciones',
+  'administrativo',
+  'gestor',
+  'inspector',
+];
+
+export const OPS_VERIFY_ROLES: readonly UserRole[] = [
+  'direccion',
+  'prevencion',
+  'jefe_operaciones',
+  'analisis_datos',
+];
+
+export const OPS_DEPLOY_ROLES: readonly UserRole[] = [
+  'direccion',
+  'prevencion',
+  'jefe_operaciones',
+];
+
+export const OPS_CLOSE_REQ_ROLES: readonly UserRole[] = [
+  'direccion',
+  'prevencion',
+  'jefe_operaciones',
+  'administrativo',
+];
+
+export function canCreateOperationalCase(
+  role: string | undefined | null,
+): boolean {
+  return !!role && (OPS_CREATE_ROLES as readonly string[]).includes(role);
+}
+
+export function canVerifyIncidencia(role: string | undefined | null): boolean {
+  return !!role && (OPS_VERIFY_ROLES as readonly string[]).includes(role);
+}
+
+export function canDeployOperation(role: string | undefined | null): boolean {
+  return !!role && (OPS_DEPLOY_ROLES as readonly string[]).includes(role);
+}
+
+export function canCloseRequerimiento(
+  role: string | undefined | null,
+): boolean {
+  return !!role && (OPS_CLOSE_REQ_ROLES as readonly string[]).includes(role);
+}
+
 export function userRoleLabel(role: string | undefined | null): string {
   if (!role) return '';
   if ((USER_ROLES as readonly string[]).includes(role)) {

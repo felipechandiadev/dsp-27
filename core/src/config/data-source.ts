@@ -13,6 +13,8 @@ import { ContractsIts1760000000007 } from '../migrations/1760000000007-Contracts
 import { StaffPersonal1760000000008 } from '../migrations/1760000000008-StaffPersonal';
 import { MultimediaAssets1760000000009 } from '../migrations/1760000000009-MultimediaAssets';
 import { RecordCodeSequences1760000000010 } from '../migrations/1760000000010-RecordCodeSequences';
+import { OperationAreas1760000000011 } from '../migrations/1760000000011-OperationAreas';
+import { OperationalCases1760000000012 } from '../migrations/1760000000012-OperationalCases';
 
 
 const root = path.resolve(__dirname, '../..');
@@ -39,6 +41,8 @@ export const AppDataSource = new DataSource({
     StaffPersonal1760000000008,
     MultimediaAssets1760000000009,
     RecordCodeSequences1760000000010,
+    OperationAreas1760000000011,
+    OperationalCases1760000000012,
   ],
   migrationsTableName: 'typeorm_migrations',
   logging: process.env.DB_LOGGING === 'true',

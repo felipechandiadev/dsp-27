@@ -25,6 +25,11 @@ Ejemplo: **`PRY26000001`** — proyecto, año 2026, correlativo 1.
 | `CTR` | Contrato |
 | `PER` | Personal (`staff`) |
 | `PSN` | Persona (si se asigna folio) |
+| `AOP` | Área de operación |
+| `INC` | Incidencia |
+| `REQ` | Requerimiento |
+| `OPE` | Operación de campo (despacho; no confundir con `AOP`) |
+| `ITY` | Tipo de incidencia (catálogo) |
 
 El **seed** y las **altas por API** usan el mismo formato. El seed asigna correlativos por prefijo/año y alinea `record_code_sequences` con `ensureAtLeast`, para que el siguiente `next()` no choque.
 

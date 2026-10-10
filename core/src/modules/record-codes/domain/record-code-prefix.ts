@@ -4,6 +4,11 @@ export const RECORD_CODE_PREFIXES = [
   'CTR',
   'PER',
   'PSN',
+  'AOP',
+  'INC',
+  'REQ',
+  'OPE',
+  'ITY',
 ] as const;
 
 export type RecordCodePrefix = (typeof RECORD_CODE_PREFIXES)[number];
