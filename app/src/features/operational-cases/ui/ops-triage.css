@@ -17,13 +17,20 @@
   pointer-events: none;
   position: absolute;
   inset: 0;
-  z-index: 10;
-  overflow: hidden;
+  z-index: 20;
+  overflow: visible;
   color: var(--color-primary, #0b3d5c);
 }
 
 .ops-triage-connector-path {
   transition: opacity 0.15s ease;
+}
+
+.ops-triage-connector-dot {
+  fill: var(--color-primary, #0b3d5c);
+  stroke: var(--color-surface, #fff);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 1px color-mix(in srgb, var(--color-primary, #0b3d5c) 45%, transparent));
 }
 
 @media (max-width: 900px) {

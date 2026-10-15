@@ -2,11 +2,16 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsIn,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
   MinLength,
+  ValidateIf,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { LocationGeometryDto } from './location-geometry.dto';
 
 export class CreateRequerimientoDto {
   @ApiProperty()
@@ -38,6 +43,14 @@ export class CreateRequerimientoDto {
   @IsOptional()
   @IsString()
   locationDescription?: string;
+
+  @ApiPropertyOptional({ type: LocationGeometryDto, nullable: true })
+  @IsOptional()
+  @ValidateIf((_, v) => v != null)
+  @IsObject()
+  @ValidateNested()
+  @Type(() => LocationGeometryDto)
+  locationGeometry?: LocationGeometryDto | null;
 
   @ApiPropertyOptional()
   @IsOptional()

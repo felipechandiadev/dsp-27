@@ -6,17 +6,24 @@ import {
   OperationalCasesRepositoryPort,
 } from '../ports/operational-cases.repository.port';
 import { mapFieldOperation } from '../helpers/ops.mapper';
+import { attachLocationGeometry } from '../helpers/ops-location.helper';
+import { CaseLocationGeometryService } from '../case-location-geometry.service';
 
 @QueryHandler(GetOperationQuery)
 export class GetOperationHandler implements IQueryHandler<GetOperationQuery> {
   constructor(
     @Inject(OPERATIONAL_CASES_REPOSITORY)
     private readonly repo: OperationalCasesRepositoryPort,
+    private readonly locationGeom: CaseLocationGeometryService,
   ) {}
 
   async execute(query: GetOperationQuery) {
     const row = await this.repo.findOperationByCode(query.code);
     if (!row) throw new NotFoundException('Operación no encontrada');
-    return mapFieldOperation(row);
+    return attachLocationGeometry(
+      this.locationGeom,
+      'field_operations',
+      mapFieldOperation(row),
+    );
   }
 }

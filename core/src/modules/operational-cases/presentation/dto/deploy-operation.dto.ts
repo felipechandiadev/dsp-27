@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsIn,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { LocationGeometryDto } from './location-geometry.dto';
 
 export class DeployOperationDto {
   @ApiProperty({
@@ -42,4 +52,12 @@ export class DeployOperationDto {
   @IsOptional()
   @IsUUID()
   areaId?: string;
+
+  @ApiPropertyOptional({ type: LocationGeometryDto, nullable: true })
+  @IsOptional()
+  @ValidateIf((_, v) => v != null)
+  @IsObject()
+  @ValidateNested()
+  @Type(() => LocationGeometryDto)
+  locationGeometry?: LocationGeometryDto | null;
 }

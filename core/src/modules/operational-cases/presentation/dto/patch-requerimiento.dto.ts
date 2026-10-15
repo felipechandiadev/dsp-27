@@ -1,5 +1,16 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsIn,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  MinLength,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { LocationGeometryDto } from './location-geometry.dto';
 
 export class PatchRequerimientoDto {
   @ApiPropertyOptional()
@@ -17,4 +28,22 @@ export class PatchRequerimientoDto {
   @IsOptional()
   @IsString()
   locationDescription?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  lat?: number | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  lng?: number | null;
+
+  @ApiPropertyOptional({ type: LocationGeometryDto, nullable: true })
+  @IsOptional()
+  @ValidateIf((_, v) => v != null)
+  @IsObject()
+  @ValidateNested()
+  @Type(() => LocationGeometryDto)
+  locationGeometry?: LocationGeometryDto | null;
 }

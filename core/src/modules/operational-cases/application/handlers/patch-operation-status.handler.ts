@@ -11,6 +11,8 @@ import {
 } from '../ports/operational-cases.repository.port';
 import { assertDeployOperationRole } from '../helpers/ops-access';
 import { mapFieldOperation } from '../helpers/ops.mapper';
+import { attachLocationGeometry } from '../helpers/ops-location.helper';
+import { CaseLocationGeometryService } from '../case-location-geometry.service';
 
 const NEXT: Record<string, string[]> = {
   asignada: ['en_traslado', 'ejecutando', 'cancelada'],
@@ -28,6 +30,7 @@ export class PatchOperationStatusHandler
   constructor(
     @Inject(OPERATIONAL_CASES_REPOSITORY)
     private readonly repo: OperationalCasesRepositoryPort,
+    private readonly locationGeom: CaseLocationGeometryService,
   ) {}
 
   async execute(cmd: PatchOperationStatusCommand) {
@@ -43,6 +46,10 @@ export class PatchOperationStatusHandler
     row.status = cmd.status;
     const saved = await this.repo.saveOperation(row);
     const full = await this.repo.findOperationById(saved.id);
-    return mapFieldOperation(full!);
+    return attachLocationGeometry(
+      this.locationGeom,
+      'field_operations',
+      mapFieldOperation(full!),
+    );
   }
 }

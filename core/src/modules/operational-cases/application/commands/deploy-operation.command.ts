@@ -1,3 +1,5 @@
+import type { CaseLocationGeometry } from '../../domain/location-geometry';
+
 export type DeployOperationInput = {
   triggerType: string;
   operationTypeId?: string;
@@ -7,6 +9,7 @@ export type DeployOperationInput = {
   incidenciaId?: string;
   assignedStaffId?: string;
   areaId?: string;
+  locationGeometry?: CaseLocationGeometry | null;
 };
 
 export class DeployOperationCommand {

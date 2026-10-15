@@ -1,3 +1,5 @@
+import type { CaseLocationGeometry } from '../../domain/location-geometry';
+
 export type CreateRequerimientoInput = {
   descripcion: string;
   prioridad?: string;
@@ -5,6 +7,7 @@ export type CreateRequerimientoInput = {
   lat?: number;
   lng?: number;
   locationDescription?: string;
+  locationGeometry?: CaseLocationGeometry | null;
   areaId?: string;
   incidenciaId?: string;
   personaSolicitanteId?: string;

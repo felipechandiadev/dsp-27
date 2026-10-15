@@ -11,6 +11,8 @@ import {
 } from '../ports/operational-cases.repository.port';
 import { assertDeployOperationRole } from '../helpers/ops-access';
 import { mapFieldOperation } from '../helpers/ops.mapper';
+import { attachLocationGeometry } from '../helpers/ops-location.helper';
+import { CaseLocationGeometryService } from '../case-location-geometry.service';
 import { RecordCodeService } from '@modules/record-codes/application/record-code.service';
 
 const TRIGGERS = new Set([
@@ -28,6 +30,7 @@ export class DeployOperationHandler
     @Inject(OPERATIONAL_CASES_REPOSITORY)
     private readonly repo: OperationalCasesRepositoryPort,
     private readonly recordCodes: RecordCodeService,
+    private readonly locationGeom: CaseLocationGeometryService,
   ) {}
 
   async execute(cmd: DeployOperationCommand) {
@@ -55,19 +58,16 @@ export class DeployOperationHandler
       const inc = await this.repo.findIncidenciaById(input.incidenciaId);
       if (!inc) throw new NotFoundException('Incidencia no encontrada');
     }
-    if (
-      input.triggerType === 'leadership_instruction' &&
-      !input.requerimientoId &&
-      !input.incidenciaId
-    ) {
-      // allowed without links
-    }
 
     if (input.operationTypeId) {
       const t = await this.repo.findOperationTypeById(input.operationTypeId);
       if (!t || t.status !== 'active') {
         throw new NotFoundException('Tipo de operación no encontrado');
       }
+    }
+
+    if (input.locationGeometry) {
+      this.locationGeom.validate(input.locationGeometry);
     }
 
     if (input.requerimientoId) {
@@ -92,7 +92,20 @@ export class DeployOperationHandler
       areaId: input.areaId ?? null,
     });
     const saved = await this.repo.saveOperation(row);
+
+    if (input.locationGeometry !== undefined) {
+      await this.locationGeom.write(
+        'field_operations',
+        saved.id,
+        input.locationGeometry,
+      );
+    }
+
     const full = await this.repo.findOperationById(saved.id);
-    return mapFieldOperation(full!);
+    return attachLocationGeometry(
+      this.locationGeom,
+      'field_operations',
+      mapFieldOperation(full!),
+    );
   }
 }

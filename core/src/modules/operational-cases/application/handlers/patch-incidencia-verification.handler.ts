@@ -11,6 +11,8 @@ import {
 } from '../ports/operational-cases.repository.port';
 import { assertVerifyIncidenciaRole } from '../helpers/ops-access';
 import { mapIncidencia } from '../helpers/ops.mapper';
+import { attachLocationGeometry } from '../helpers/ops-location.helper';
+import { CaseLocationGeometryService } from '../case-location-geometry.service';
 
 const STATUSES = new Set(['sin_verificar', 'verificada', 'descartada']);
 
@@ -21,6 +23,7 @@ export class PatchIncidenciaVerificationHandler
   constructor(
     @Inject(OPERATIONAL_CASES_REPOSITORY)
     private readonly repo: OperationalCasesRepositoryPort,
+    private readonly locationGeom: CaseLocationGeometryService,
   ) {}
 
   async execute(cmd: PatchIncidenciaVerificationCommand) {
@@ -35,6 +38,10 @@ export class PatchIncidenciaVerificationHandler
     row.status = cmd.status;
     const saved = await this.repo.saveIncidencia(row);
     const full = await this.repo.findIncidenciaById(saved.id);
-    return mapIncidencia(full!);
+    return attachLocationGeometry(
+      this.locationGeom,
+      'incidencias',
+      mapIncidencia(full!),
+    );
   }
 }

@@ -30,6 +30,8 @@ import { OperationType } from '@modules/operational-cases/domain/operation-type.
 import { Incidencia } from '@modules/operational-cases/domain/incidencia.entity';
 import { Requerimiento } from '@modules/operational-cases/domain/requerimiento.entity';
 import { FieldOperation } from '@modules/operational-cases/domain/field-operation.entity';
+import { DocumentType } from '@modules/documents/domain/document-type.entity';
+import { PreventivePatrol } from '@modules/preventive-patrols/domain/preventive-patrol.entity';
 
 export const entities = [
   Person,
@@ -62,6 +64,8 @@ export const entities = [
   Incidencia,
   Requerimiento,
   FieldOperation,
+  DocumentType,
+  PreventivePatrol,
 ];
 
 

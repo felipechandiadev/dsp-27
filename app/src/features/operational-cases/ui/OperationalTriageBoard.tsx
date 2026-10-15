@@ -26,6 +26,7 @@ import {
   canVerifyIncidencia,
 } from '@/shared/auth/user-roles';
 import type {
+  CaseLocationGeometry,
   CatalogType,
   FieldOperationRow,
   IncidenciaRow,
@@ -41,6 +42,7 @@ import { OpsIncidenciaCard } from './OpsIncidenciaCard';
 import { OpsRequerimientoCard } from './OpsRequerimientoCard';
 import { OpsOperacionCard } from './OpsOperacionCard';
 import { OpsTriageConnectorOverlay } from './OpsTriageConnectorOverlay';
+import { LocationGeometryPicker } from './LocationGeometryPicker';
 import './ops-triage.css';
 
 type Props = {
@@ -103,12 +105,18 @@ export function OperationalTriageBoard({
   const [incTitle, setIncTitle] = useState('');
   const [incDesc, setIncDesc] = useState('');
   const [incTypeId, setIncTypeId] = useState<string | number | null>(null);
+  const [incLocationDesc, setIncLocationDesc] = useState('');
+  const [incLocationGeometry, setIncLocationGeometry] =
+    useState<CaseLocationGeometry | null>(null);
   const [newTypeName, setNewTypeName] = useState('');
   const [reqDesc, setReqDesc] = useState('');
   const [reqPriority, setReqPriority] = useState<string | number | null>('P2');
   const [reqIncidenciaId, setReqIncidenciaId] = useState<
     string | number | null
   >(null);
+  const [reqLocationDesc, setReqLocationDesc] = useState('');
+  const [reqLocationGeometry, setReqLocationGeometry] =
+    useState<CaseLocationGeometry | null>(null);
   const [deployTrigger, setDeployTrigger] = useState<string | number | null>(
     'requerimiento',
   );
@@ -118,6 +126,8 @@ export function OperationalTriageBoard({
   const [deployBriefing, setDeployBriefing] = useState('');
   const [deployReqId, setDeployReqId] = useState<string | number | null>(null);
   const [deployIncId, setDeployIncId] = useState<string | number | null>(null);
+  const [deployLocationGeometry, setDeployLocationGeometry] =
+    useState<CaseLocationGeometry | null>(null);
   const [closeStatus, setCloseStatus] = useState<string | number | null>(
     'resuelto',
   );
@@ -265,6 +275,8 @@ export function OperationalTriageBoard({
         title,
         descripcion: incDesc.trim() || undefined,
         incidentTypeId: incTypeId ? String(incTypeId) : undefined,
+        locationDescription: incLocationDesc.trim() || undefined,
+        locationGeometry: incLocationGeometry ?? undefined,
       }),
     });
     setPending(false);
@@ -277,6 +289,8 @@ export function OperationalTriageBoard({
     setIncTitle('');
     setIncDesc('');
     setIncTypeId(null);
+    setIncLocationDesc('');
+    setIncLocationGeometry(null);
     setDialogError(null);
     router.refresh();
   }
@@ -296,6 +310,8 @@ export function OperationalTriageBoard({
         descripcion: reqDesc.trim(),
         prioridad: reqPriority ? String(reqPriority) : 'P2',
         incidenciaId: reqIncidenciaId ? String(reqIncidenciaId) : undefined,
+        locationDescription: reqLocationDesc.trim() || undefined,
+        locationGeometry: reqLocationGeometry ?? undefined,
       }),
     });
     setPending(false);
@@ -317,6 +333,8 @@ export function OperationalTriageBoard({
     setCreateReqOpen(false);
     setReqDesc('');
     setReqIncidenciaId(null);
+    setReqLocationDesc('');
+    setReqLocationGeometry(null);
     setDialogError(null);
     router.refresh();
   }
@@ -414,6 +432,7 @@ export function OperationalTriageBoard({
           trigger === 'incidencia' && deployIncId
             ? String(deployIncId)
             : undefined,
+        locationGeometry: deployLocationGeometry ?? undefined,
       }),
     });
     setPending(false);
@@ -424,6 +443,7 @@ export function OperationalTriageBoard({
     setOperations((prev) => [data as FieldOperationRow, ...prev]);
     setDeployOpen(false);
     setDeployBriefing('');
+    setDeployLocationGeometry(null);
     setDialogError(null);
     router.refresh();
   }
@@ -519,18 +539,11 @@ export function OperationalTriageBoard({
         <div
           style={{
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent: 'flex-start',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: '0.35rem',
           }}
         >
-          <strong style={{ fontSize: '0.95rem' }}>
-            {key === 'inc'
-              ? 'Incidencias'
-              : key === 'req'
-                ? 'Requerimientos'
-                : 'Operaciones'}
-          </strong>
           {key === 'inc' && canCreate ? (
             <IconButton
               icon="Plus"
@@ -570,6 +583,13 @@ export function OperationalTriageBoard({
               }}
             />
           ) : null}
+          <strong style={{ fontSize: '0.95rem' }}>
+            {key === 'inc'
+              ? 'Incidencias'
+              : key === 'req'
+                ? 'Requerimientos'
+                : 'Operaciones'}
+          </strong>
         </div>
 
         {key === 'inc' &&
@@ -806,6 +826,13 @@ export function OperationalTriageBoard({
               />
             ) : null}
           </div>
+          <LocationGeometryPicker
+            value={incLocationGeometry}
+            onChange={setIncLocationGeometry}
+            description={incLocationDesc}
+            onDescriptionChange={setIncLocationDesc}
+            showDescription
+          />
           <div className="flex justify-end gap-2">
             <Button
               type="button"
@@ -892,6 +919,13 @@ export function OperationalTriageBoard({
             allowClear
             placeholder="Opcional"
           />
+          <LocationGeometryPicker
+            value={reqLocationGeometry}
+            onChange={setReqLocationGeometry}
+            description={reqLocationDesc}
+            onDescriptionChange={setReqLocationDesc}
+            showDescription
+          />
           <div className="flex justify-end gap-2">
             <Button
               type="button"
@@ -960,6 +994,10 @@ export function OperationalTriageBoard({
             value={deployBriefing}
             onChange={(e) => setDeployBriefing(e.target.value)}
             rows={2}
+          />
+          <LocationGeometryPicker
+            value={deployLocationGeometry}
+            onChange={setDeployLocationGeometry}
           />
           <div className="flex justify-end gap-2">
             <Button

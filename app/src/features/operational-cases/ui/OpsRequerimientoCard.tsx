@@ -9,8 +9,9 @@ import {
   TextField,
 } from '@felipechandiadev/ui';
 import { OpsTriageExpandableCard } from './OpsTriageExpandableCard';
+import { LocationGeometryPicker } from './LocationGeometryPicker';
 import type { OpsEntityKind } from './compute-ops-traceability-edges';
-import type { RequerimientoRow } from './ops-types';
+import type { CaseLocationGeometry, RequerimientoRow } from './ops-types';
 import {
   PRIORITY_OPTIONS,
   REQ_STATUS_BADGE,
@@ -70,6 +71,10 @@ export function OpsRequerimientoCard({
   const [location, setLocation] = useState(
     requerimiento.locationDescription ?? '',
   );
+  const [locationGeometry, setLocationGeometry] =
+    useState<CaseLocationGeometry | null>(
+      requerimiento.locationGeometry ?? null,
+    );
   const [saving, setSaving] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -77,6 +82,7 @@ export function OpsRequerimientoCard({
     setDescripcion(requerimiento.descripcion);
     setPrioridad(requerimiento.prioridad);
     setLocation(requerimiento.locationDescription ?? '');
+    setLocationGeometry(requerimiento.locationGeometry ?? null);
   }, [requerimiento]);
 
   async function save(e: FormEvent) {
@@ -97,6 +103,7 @@ export function OpsRequerimientoCard({
           descripcion: trimmed,
           prioridad: prioridad ? String(prioridad) : 'P2',
           locationDescription: location.trim() || null,
+          locationGeometry,
         }),
       },
     );
@@ -145,6 +152,9 @@ export function OpsRequerimientoCard({
             {requerimiento.incidenciaId ? (
               <Badge variant="info">Inc vinculada</Badge>
             ) : null}
+            {requerimiento.locationGeometry ? (
+              <Badge variant="secondary-outlined">Ubicación</Badge>
+            ) : null}
           </div>
         </>
       }
@@ -173,10 +183,12 @@ export function OpsRequerimientoCard({
             value={prioridad}
             onChange={(id) => setPrioridad(id)}
           />
-          <TextField
-            label="Ubicación"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
+          <LocationGeometryPicker
+            value={locationGeometry}
+            onChange={setLocationGeometry}
+            description={location}
+            onDescriptionChange={setLocation}
+            showDescription
           />
           <div className="ops-triage-actions">
             <Button type="submit" variant="primary" disabled={saving || pending}>
@@ -185,9 +197,21 @@ export function OpsRequerimientoCard({
           </div>
         </form>
       ) : (
-        <p style={{ margin: 0, fontSize: '0.9rem' }}>
-          {requerimiento.descripcion}
-        </p>
+        <>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            {requerimiento.descripcion}
+          </p>
+          {requerimiento.locationGeometry || requerimiento.locationDescription ? (
+            <LocationGeometryPicker
+              value={requerimiento.locationGeometry ?? null}
+              onChange={() => undefined}
+              description={requerimiento.locationDescription ?? ''}
+              showDescription={!!requerimiento.locationDescription}
+              onDescriptionChange={() => undefined}
+              readOnly
+            />
+          ) : null}
+        </>
       )}
 
       {canClose && !closed ? (

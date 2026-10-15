@@ -15,6 +15,9 @@ import { MultimediaAssets1760000000009 } from '../migrations/1760000000009-Multi
 import { RecordCodeSequences1760000000010 } from '../migrations/1760000000010-RecordCodeSequences';
 import { OperationAreas1760000000011 } from '../migrations/1760000000011-OperationAreas';
 import { OperationalCases1760000000012 } from '../migrations/1760000000012-OperationalCases';
+import { DocumentTypes1760000000013 } from '../migrations/1760000000013-DocumentTypes';
+import { PreventivePatrols1760000000014 } from '../migrations/1760000000014-PreventivePatrols';
+import { CaseLocationGeom1760000000015 } from '../migrations/1760000000015-CaseLocationGeom';
 
 
 const root = path.resolve(__dirname, '../..');
@@ -43,6 +46,9 @@ export const AppDataSource = new DataSource({
     RecordCodeSequences1760000000010,
     OperationAreas1760000000011,
     OperationalCases1760000000012,
+    DocumentTypes1760000000013,
+    PreventivePatrols1760000000014,
+    CaseLocationGeom1760000000015,
   ],
   migrationsTableName: 'typeorm_migrations',
   logging: process.env.DB_LOGGING === 'true',

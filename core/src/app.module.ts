@@ -20,6 +20,8 @@ import { MultimediaModule } from './modules/multimedia/multimedia.module';
 import { RecordCodesModule } from './modules/record-codes/record-codes.module';
 import { TerritoryModule } from './modules/territory/territory.module';
 import { OperationalCasesModule } from './modules/operational-cases/operational-cases.module';
+import { DocumentsModule } from './modules/documents/documents.module';
+import { PreventivePatrolsModule } from './modules/preventive-patrols/preventive-patrols.module';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { OperationalCasesModule } from './modules/operational-cases/operational-
     MultimediaModule,
     TerritoryModule,
     OperationalCasesModule,
+    DocumentsModule,
+    PreventivePatrolsModule,
   ],
 })
 export class AppModule {}

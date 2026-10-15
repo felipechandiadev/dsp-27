@@ -1,3 +1,5 @@
+import type { CaseLocationGeometry } from '../../domain/location-geometry';
+
 export type CreateIncidenciaInput = {
   title: string;
   descripcion?: string;
@@ -6,6 +8,7 @@ export type CreateIncidenciaInput = {
   lat?: number;
   lng?: number;
   locationDescription?: string;
+  locationGeometry?: CaseLocationGeometry | null;
   areaId?: string;
   requerimientoId?: string;
   ingressChannel?: string;

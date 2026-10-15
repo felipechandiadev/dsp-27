@@ -11,6 +11,8 @@ import {
 } from '../ports/operational-cases.repository.port';
 import { assertCloseRequerimientoRole } from '../helpers/ops-access';
 import { mapRequerimiento } from '../helpers/ops.mapper';
+import { attachLocationGeometry } from '../helpers/ops-location.helper';
+import { CaseLocationGeometryService } from '../case-location-geometry.service';
 
 const CLOSE_STATUSES = new Set(['resuelto', 'no_resuelto', 'descartado']);
 
@@ -21,6 +23,7 @@ export class CloseRequerimientoHandler
   constructor(
     @Inject(OPERATIONAL_CASES_REPOSITORY)
     private readonly repo: OperationalCasesRepositoryPort,
+    private readonly locationGeom: CaseLocationGeometryService,
   ) {}
 
   async execute(cmd: CloseRequerimientoCommand) {
@@ -35,6 +38,11 @@ export class CloseRequerimientoHandler
     row.status = cmd.status;
     row.closedAt = new Date();
     row.closeReason = cmd.reason?.trim() || null;
-    return mapRequerimiento(await this.repo.saveRequerimiento(row));
+    const saved = await this.repo.saveRequerimiento(row);
+    return attachLocationGeometry(
+      this.locationGeom,
+      'requerimientos',
+      mapRequerimiento(saved),
+    );
   }
 }

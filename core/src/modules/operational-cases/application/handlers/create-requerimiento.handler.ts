@@ -11,6 +11,11 @@ import {
 } from '../ports/operational-cases.repository.port';
 import { assertCreateCaseRole } from '../helpers/ops-access';
 import { mapRequerimiento } from '../helpers/ops.mapper';
+import {
+  attachLocationGeometry,
+  resolveCreateLocationGeometry,
+} from '../helpers/ops-location.helper';
+import { CaseLocationGeometryService } from '../case-location-geometry.service';
 import { RecordCodeService } from '@modules/record-codes/application/record-code.service';
 
 const PRIORITIES = new Set(['P0', 'P1', 'P2', 'P3']);
@@ -23,6 +28,7 @@ export class CreateRequerimientoHandler
     @Inject(OPERATIONAL_CASES_REPOSITORY)
     private readonly repo: OperationalCasesRepositoryPort,
     private readonly recordCodes: RecordCodeService,
+    private readonly locationGeom: CaseLocationGeometryService,
   ) {}
 
   async execute(cmd: CreateRequerimientoCommand) {
@@ -42,6 +48,10 @@ export class CreateRequerimientoHandler
       if (!inc) throw new NotFoundException('Incidencia no encontrada');
     }
 
+    const resolved = resolveCreateLocationGeometry(cmd.input);
+    if (resolved) this.locationGeom.validate(resolved);
+    const coords = this.locationGeom.coordsFromGeometry(resolved ?? null);
+
     const code = await this.recordCodes.next('REQ');
     const row = this.repo.createRequerimiento({
       code,
@@ -51,14 +61,18 @@ export class CreateRequerimientoHandler
       occurredAt: cmd.input.occurredAt
         ? new Date(cmd.input.occurredAt)
         : new Date(),
-      lat: cmd.input.lat ?? null,
-      lng: cmd.input.lng ?? null,
+      lat: coords.lat,
+      lng: coords.lng,
       locationDescription: cmd.input.locationDescription?.trim() || null,
       areaId: cmd.input.areaId ?? null,
       incidenciaId,
       personaSolicitanteId: cmd.input.personaSolicitanteId ?? null,
     });
     const saved = await this.repo.saveRequerimiento(row);
+
+    if (resolved !== undefined) {
+      await this.locationGeom.write('requerimientos', saved.id, resolved);
+    }
 
     if (incidenciaId) {
       const inc = await this.repo.findIncidenciaById(incidenciaId);
@@ -68,6 +82,11 @@ export class CreateRequerimientoHandler
       }
     }
 
-    return mapRequerimiento(saved);
+    const full = await this.repo.findRequerimientoById(saved.id);
+    return attachLocationGeometry(
+      this.locationGeom,
+      'requerimientos',
+      mapRequerimiento(full!),
+    );
   }
 }

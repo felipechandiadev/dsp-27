@@ -9,6 +9,8 @@ export const RECORD_CODE_PREFIXES = [
   'REQ',
   'OPE',
   'ITY',
+  'DTY',
+  'PPV',
 ] as const;
 
 export type RecordCodePrefix = (typeof RECORD_CODE_PREFIXES)[number];

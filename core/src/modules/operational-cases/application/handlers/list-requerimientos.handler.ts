@@ -6,6 +6,8 @@ import {
   OperationalCasesRepositoryPort,
 } from '../ports/operational-cases.repository.port';
 import { mapRequerimiento } from '../helpers/ops.mapper';
+import { attachLocationGeometryMany } from '../helpers/ops-location.helper';
+import { CaseLocationGeometryService } from '../case-location-geometry.service';
 
 @QueryHandler(ListRequerimientosQuery)
 export class ListRequerimientosHandler
@@ -14,6 +16,7 @@ export class ListRequerimientosHandler
   constructor(
     @Inject(OPERATIONAL_CASES_REPOSITORY)
     private readonly repo: OperationalCasesRepositoryPort,
+    private readonly locationGeom: CaseLocationGeometryService,
   ) {}
 
   async execute(query: ListRequerimientosQuery) {
@@ -21,6 +24,10 @@ export class ListRequerimientosHandler
       openOnly: query.openOnly,
       limit: query.limit,
     });
-    return rows.map(mapRequerimiento);
+    return attachLocationGeometryMany(
+      this.locationGeom,
+      'requerimientos',
+      rows.map(mapRequerimiento),
+    );
   }
 }

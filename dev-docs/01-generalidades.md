@@ -32,9 +32,11 @@ La numeración de cartera es la del libro: **PRJ-1 a PRJ-3 y PRJ-5 a PRJ-16** (n
 | Personal y nómina | Expediente, calidad de inspector/a, nómina trimestral | TAR-3, arts. 12°, 15° y 16° |
 | Capacitaciones | Cursos, aprobación, reloj de 1 y 2 años | Arts. 13°, 49°–51° |
 | Multimedia | Oficios, facturas, actas, especificaciones, folletos, fotos de terreno | Archivo de la Dirección |
+| Tipos de documentos | Catálogo maestro (`/document-types`): decreto, contrato, informe, acta… | Reutilizado por otras secciones |
 | ITS | Contratos vigentes: SLA, incidencias, actas, informes | Guardias, parquímetros, PRJ-13 |
 | Licitaciones | Especificación técnica, bases, llamado, adjudicación, recepción | Ley 19.886; PRJ con compra |
 | Prevención | Sectores, rondas puerta a puerta, instrumento, difusión | PRJ-14, PRJ-15, PRJ-16 |
+| Rondas preventivas | Ficha PPV-01 en stepper (`/rondas-preventivas`) | Patrullaje preventivo vecinal |
 | Triage | Incidencias, requerimientos y despachos de campo (`/triage`) | [13-flujo-operativo](./13-flujo-operativo.md) |
 | Solicitudes | Ventanilla única (`/requests`) | Placeholder |
 | Activos | Catastro de cámaras, radios, EPP, puntos SUBDERE | Arts. 5° y 19°, PRJ-11, PRJ-12 |

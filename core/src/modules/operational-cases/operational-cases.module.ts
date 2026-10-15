@@ -29,6 +29,7 @@ import { CloseRequerimientoHandler } from './application/handlers/close-requerim
 import { DeployOperationHandler } from './application/handlers/deploy-operation.handler';
 import { PatchOperationStatusHandler } from './application/handlers/patch-operation-status.handler';
 import { PatchOperationHandler } from './application/handlers/patch-operation.handler';
+import { CaseLocationGeometryService } from './application/case-location-geometry.service';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PatchOperationHandler } from './application/handlers/patch-operation.ha
       provide: OPERATIONAL_CASES_REPOSITORY,
       useClass: TypeOrmOperationalCasesRepository,
     },
+    CaseLocationGeometryService,
     ListIncidentTypesHandler,
     ListOperationTypesHandler,
     ListIncidenciasHandler,

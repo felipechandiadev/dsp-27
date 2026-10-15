@@ -9,8 +9,9 @@ import {
   TextField,
 } from '@felipechandiadev/ui';
 import { OpsTriageExpandableCard } from './OpsTriageExpandableCard';
+import { LocationGeometryPicker } from './LocationGeometryPicker';
 import type { OpsEntityKind } from './compute-ops-traceability-edges';
-import type { CatalogType, IncidenciaRow } from './ops-types';
+import type { CaseLocationGeometry, CatalogType, IncidenciaRow } from './ops-types';
 import {
   INC_STATUS_BADGE,
   INC_STATUS_LABELS,
@@ -68,6 +69,10 @@ export function OpsIncidenciaCard({
   const [location, setLocation] = useState(
     incidencia.locationDescription ?? '',
   );
+  const [locationGeometry, setLocationGeometry] =
+    useState<CaseLocationGeometry | null>(
+      incidencia.locationGeometry ?? null,
+    );
   const [saving, setSaving] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -76,6 +81,7 @@ export function OpsIncidenciaCard({
     setDescripcion(incidencia.descripcion ?? '');
     setTypeId(incidencia.incidentTypeId);
     setLocation(incidencia.locationDescription ?? '');
+    setLocationGeometry(incidencia.locationGeometry ?? null);
   }, [incidencia]);
 
   async function save(e: FormEvent) {
@@ -97,6 +103,7 @@ export function OpsIncidenciaCard({
           descripcion: descripcion.trim() || null,
           incidentTypeId: typeId ? String(typeId) : null,
           locationDescription: location.trim() || null,
+          locationGeometry,
         }),
       },
     );
@@ -142,6 +149,9 @@ export function OpsIncidenciaCard({
             {incidencia.requerimientoId ? (
               <Badge variant="info">Req vinculado</Badge>
             ) : null}
+            {incidencia.locationGeometry ? (
+              <Badge variant="secondary-outlined">Ubicación</Badge>
+            ) : null}
           </div>
         </>
       }
@@ -176,10 +186,12 @@ export function OpsIncidenciaCard({
             onChange={(id) => setTypeId(id)}
             placeholder="Sin tipo"
           />
-          <TextField
-            label="Ubicación"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
+          <LocationGeometryPicker
+            value={locationGeometry}
+            onChange={setLocationGeometry}
+            description={location}
+            onDescriptionChange={setLocation}
+            showDescription
           />
           <div className="ops-triage-actions">
             <Button type="submit" variant="primary" disabled={saving || pending}>
@@ -188,9 +200,21 @@ export function OpsIncidenciaCard({
           </div>
         </form>
       ) : (
-        <p style={{ margin: 0, fontSize: '0.9rem' }}>
-          {incidencia.descripcion || 'Sin descripción'}
-        </p>
+        <>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            {incidencia.descripcion || 'Sin descripción'}
+          </p>
+          {incidencia.locationGeometry || incidencia.locationDescription ? (
+            <LocationGeometryPicker
+              value={incidencia.locationGeometry ?? null}
+              onChange={() => undefined}
+              description={incidencia.locationDescription ?? ''}
+              showDescription={!!incidencia.locationDescription}
+              onDescriptionChange={() => undefined}
+              readOnly
+            />
+          ) : null}
+        </>
       )}
 
       {canVerify && incidencia.status === 'sin_verificar' ? (

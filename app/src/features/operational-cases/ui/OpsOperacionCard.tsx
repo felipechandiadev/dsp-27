@@ -9,8 +9,9 @@ import {
   TextField,
 } from '@felipechandiadev/ui';
 import { OpsTriageExpandableCard } from './OpsTriageExpandableCard';
+import { LocationGeometryPicker } from './LocationGeometryPicker';
 import type { OpsEntityKind } from './compute-ops-traceability-edges';
-import type { FieldOperationRow } from './ops-types';
+import type { CaseLocationGeometry, FieldOperationRow } from './ops-types';
 import {
   OP_STATUS_BADGE,
   OP_STATUS_LABELS,
@@ -64,12 +65,17 @@ export function OpsOperacionCard({
   const [prioridad, setPrioridad] = useState<string | number | null>(
     operation.prioridad,
   );
+  const [locationGeometry, setLocationGeometry] =
+    useState<CaseLocationGeometry | null>(
+      operation.locationGeometry ?? null,
+    );
   const [saving, setSaving] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
     setBriefing(operation.briefing ?? '');
     setPrioridad(operation.prioridad);
+    setLocationGeometry(operation.locationGeometry ?? null);
   }, [operation]);
 
   async function save(e: FormEvent) {
@@ -84,6 +90,7 @@ export function OpsOperacionCard({
         body: JSON.stringify({
           briefing: briefing.trim() || null,
           prioridad: prioridad ? String(prioridad) : 'P2',
+          locationGeometry,
         }),
       },
     );
@@ -139,6 +146,9 @@ export function OpsOperacionCard({
               {OP_STATUS_LABELS[operation.status] ?? operation.status}
             </Badge>
             <Badge variant="secondary-outlined">{operation.triggerType}</Badge>
+            {operation.locationGeometry ? (
+              <Badge variant="secondary-outlined">Ubicación</Badge>
+            ) : null}
           </div>
         </>
       }
@@ -166,6 +176,10 @@ export function OpsOperacionCard({
             value={prioridad}
             onChange={(id) => setPrioridad(id)}
           />
+          <LocationGeometryPicker
+            value={locationGeometry}
+            onChange={setLocationGeometry}
+          />
           <div className="ops-triage-actions">
             <Button type="submit" variant="primary" disabled={saving || pending}>
               {saving ? 'Guardando…' : 'Guardar'}
@@ -173,9 +187,18 @@ export function OpsOperacionCard({
           </div>
         </form>
       ) : (
-        <p style={{ margin: 0, fontSize: '0.9rem' }}>
-          {operation.briefing || 'Sin briefing'}
-        </p>
+        <>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            {operation.briefing || 'Sin briefing'}
+          </p>
+          {operation.locationGeometry ? (
+            <LocationGeometryPicker
+              value={operation.locationGeometry}
+              onChange={() => undefined}
+              readOnly
+            />
+          ) : null}
+        </>
       )}
 
       {canEdit && nextStatuses.length ? (

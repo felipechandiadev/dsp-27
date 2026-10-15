@@ -13,9 +13,15 @@ type Point = { x: number; y: number };
 type RenderedEdge = {
   key: string;
   d: string;
+  from: Point;
+  to: Point;
   kind: OpsTraceabilityEdgeKind;
   emphasized: boolean;
 };
+
+function endpointRadius(emphasized: boolean): number {
+  return emphasized ? 5.5 : 4.5;
+}
 
 type Selection =
   | { kind: OpsEntityKind; id: string }
@@ -36,9 +42,19 @@ function anchorPoint(
   };
 }
 
-function bezierPath(from: Point, to: Point, kind: OpsTraceabilityEdgeKind): string {
-  const span = to.x - from.x;
-  const dx = Math.max(kind === 'inc-op' ? 80 : 40, span * 0.42);
+/** Evita la S cuando el gap es chico: recta o handles acotados al span. */
+function edgePath(from: Point, to: Point, kind: OpsTraceabilityEdgeKind): string {
+  const spanX = to.x - from.x;
+  const spanY = Math.abs(to.y - from.y);
+
+  if (spanX < 48 || (spanX < 72 && spanY < 12)) {
+    return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
+  }
+
+  const maxDx = spanX * 0.35;
+  const minDx = kind === 'inc-op' ? 24 : 16;
+  const dx = Math.min(maxDx, Math.max(minDx, spanX * 0.3));
+
   return `M ${from.x} ${from.y} C ${from.x + dx} ${from.y}, ${to.x - dx} ${to.y}, ${to.x} ${to.y}`;
 }
 
@@ -70,7 +86,9 @@ function buildRenderedEdges(
 
     rendered.push({
       key,
-      d: bezierPath(from, to, edge.kind),
+      d: edgePath(from, to, edge.kind),
+      from,
+      to,
       kind: edge.kind,
       emphasized,
     });
@@ -167,19 +185,39 @@ export function OpsTriageConnectorOverlay({
 
   const svgContent = useMemo(
     () =>
-      paths.map((path) => (
-        <path
-          key={path.key}
-          d={path.d}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={edgeStrokeWidth(path.kind, path.emphasized)}
-          strokeDasharray={path.kind === 'inc-op' ? '8 5' : undefined}
-          strokeLinecap="round"
-          className="ops-triage-connector-path"
-          opacity={path.emphasized ? 1 : 0.72}
-        />
-      )),
+      paths.map((path) => {
+        const r = endpointRadius(path.emphasized);
+        const opacity = path.emphasized ? 1 : 0.78;
+        return (
+          <g
+            key={path.key}
+            className="ops-triage-connector-edge"
+            opacity={opacity}
+          >
+            <path
+              d={path.d}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={edgeStrokeWidth(path.kind, path.emphasized)}
+              strokeDasharray={path.kind === 'inc-op' ? '8 5' : undefined}
+              strokeLinecap="round"
+              className="ops-triage-connector-path"
+            />
+            <circle
+              cx={path.from.x}
+              cy={path.from.y}
+              r={r}
+              className="ops-triage-connector-dot ops-triage-connector-dot--from"
+            />
+            <circle
+              cx={path.to.x}
+              cy={path.to.y}
+              r={r}
+              className="ops-triage-connector-dot ops-triage-connector-dot--to"
+            />
+          </g>
+        );
+      }),
     [paths],
   );
 

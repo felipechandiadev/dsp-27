@@ -11,6 +11,8 @@ import {
 } from '../ports/operational-cases.repository.port';
 import { assertDeployOperationRole } from '../helpers/ops-access';
 import { mapFieldOperation } from '../helpers/ops.mapper';
+import { attachLocationGeometry } from '../helpers/ops-location.helper';
+import { CaseLocationGeometryService } from '../case-location-geometry.service';
 
 const PRIORITIES = new Set(['P0', 'P1', 'P2', 'P3']);
 const TERMINAL = new Set(['finalizada', 'cancelada', 'fallida']);
@@ -22,6 +24,7 @@ export class PatchOperationHandler
   constructor(
     @Inject(OPERATIONAL_CASES_REPOSITORY)
     private readonly repo: OperationalCasesRepositoryPort,
+    private readonly locationGeom: CaseLocationGeometryService,
   ) {}
 
   async execute(cmd: PatchOperationCommand) {
@@ -34,8 +37,12 @@ export class PatchOperationHandler
       );
     }
 
-    const { briefing, prioridad } = cmd.input;
-    if (briefing === undefined && prioridad === undefined) {
+    const { briefing, prioridad, locationGeometry } = cmd.input;
+    if (
+      briefing === undefined &&
+      prioridad === undefined &&
+      locationGeometry === undefined
+    ) {
       throw new BadRequestException('Sin campos para actualizar');
     }
 
@@ -51,9 +58,23 @@ export class PatchOperationHandler
       }
       row.prioridad = prioridad;
     }
+    if (locationGeometry !== undefined) {
+      if (locationGeometry != null) {
+        this.locationGeom.validate(locationGeometry);
+      }
+      await this.locationGeom.write(
+        'field_operations',
+        row.id,
+        locationGeometry,
+      );
+    }
 
     const saved = await this.repo.saveOperation(row);
     const full = await this.repo.findOperationById(saved.id);
-    return mapFieldOperation(full!);
+    return attachLocationGeometry(
+      this.locationGeom,
+      'field_operations',
+      mapFieldOperation(full!),
+    );
   }
 }

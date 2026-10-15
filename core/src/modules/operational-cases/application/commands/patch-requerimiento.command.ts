@@ -1,3 +1,5 @@
+import type { CaseLocationGeometry } from '../../domain/location-geometry';
+
 export class PatchRequerimientoCommand {
   constructor(
     public readonly actorRole: string,
@@ -6,6 +8,9 @@ export class PatchRequerimientoCommand {
       descripcion?: string;
       prioridad?: string;
       locationDescription?: string | null;
+      lat?: number | null;
+      lng?: number | null;
+      locationGeometry?: CaseLocationGeometry | null;
     },
   ) {}
 }

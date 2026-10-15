@@ -1,3 +1,7 @@
+import type { CaseLocationGeometry } from './location-geometry-types';
+
+export type { CaseLocationGeometry } from './location-geometry-types';
+
 export type CatalogType = {
   id: string;
   code: string;
@@ -18,6 +22,7 @@ export type IncidenciaRow = {
   lat: number | null;
   lng: number | null;
   locationDescription: string | null;
+  locationGeometry: CaseLocationGeometry | null;
   areaId: string | null;
   requerimientoId: string | null;
   ingressChannel: string;
@@ -35,6 +40,7 @@ export type RequerimientoRow = {
   lat: number | null;
   lng: number | null;
   locationDescription: string | null;
+  locationGeometry: CaseLocationGeometry | null;
   areaId: string | null;
   incidenciaId: string | null;
   personaSolicitanteId: string | null;
@@ -56,6 +62,7 @@ export type FieldOperationRow = {
   incidenciaId: string | null;
   assignedStaffId: string | null;
   areaId: string | null;
+  locationGeometry: CaseLocationGeometry | null;
   createdAt: string;
 };
 
@@ -141,17 +148,26 @@ export const OP_STATUS_BADGE: Record<string, BadgeVariantName> = {
   fallida: 'error',
 };
 
+/** Formato fijo (sin NBSP de locale) para evitar hydration mismatch SSR/cliente. */
 export function formatOpsDateTime(value: string | null | undefined): string {
   if (!value) return '—';
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString('es-CL', {
+
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'America/Santiago',
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-  });
+    hour12: false,
+  }).formatToParts(d);
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? '';
+
+  return `${get('day')}-${get('month')}-${get('year')}, ${get('hour')}:${get('minute')}`;
 }
 
 export function clampText(value: string | null | undefined, max = 100): string {

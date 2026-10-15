@@ -59,6 +59,13 @@ export function canWriteTerritory(role: string | undefined | null): boolean {
   return (TERRITORY_WRITE_ROLES as readonly string[]).includes(role);
 }
 
+/** Mismos roles que territory: admin de catálogo de tipos de documento. */
+export const DOCUMENT_TYPES_WRITE_ROLES = TERRITORY_WRITE_ROLES;
+
+export function canWriteDocumentTypes(role: string | undefined | null): boolean {
+  return canWriteTerritory(role);
+}
+
 export const OPS_CREATE_ROLES: readonly UserRole[] = [
   'direccion',
   'prevencion',

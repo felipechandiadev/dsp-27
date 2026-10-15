@@ -11,6 +11,11 @@ import {
 } from '../ports/operational-cases.repository.port';
 import { assertCreateCaseRole } from '../helpers/ops-access';
 import { mapIncidencia } from '../helpers/ops.mapper';
+import {
+  attachLocationGeometry,
+  resolveCreateLocationGeometry,
+} from '../helpers/ops-location.helper';
+import { CaseLocationGeometryService } from '../case-location-geometry.service';
 import { RecordCodeService } from '@modules/record-codes/application/record-code.service';
 
 @CommandHandler(CreateIncidenciaCommand)
@@ -21,6 +26,7 @@ export class CreateIncidenciaHandler
     @Inject(OPERATIONAL_CASES_REPOSITORY)
     private readonly repo: OperationalCasesRepositoryPort,
     private readonly recordCodes: RecordCodeService,
+    private readonly locationGeom: CaseLocationGeometryService,
   ) {}
 
   async execute(cmd: CreateIncidenciaCommand) {
@@ -39,6 +45,10 @@ export class CreateIncidenciaHandler
       if (!req) throw new NotFoundException('Requerimiento no encontrado');
     }
 
+    const resolved = resolveCreateLocationGeometry(cmd.input);
+    if (resolved) this.locationGeom.validate(resolved);
+    const coords = this.locationGeom.coordsFromGeometry(resolved ?? null);
+
     const code = await this.recordCodes.next('INC');
     const row = this.repo.createIncidencia({
       code,
@@ -49,8 +59,8 @@ export class CreateIncidenciaHandler
       occurredAt: cmd.input.occurredAt
         ? new Date(cmd.input.occurredAt)
         : new Date(),
-      lat: cmd.input.lat ?? null,
-      lng: cmd.input.lng ?? null,
+      lat: coords.lat,
+      lng: coords.lng,
       locationDescription: cmd.input.locationDescription?.trim() || null,
       areaId: cmd.input.areaId ?? null,
       requerimientoId: cmd.input.requerimientoId ?? null,
@@ -59,7 +69,16 @@ export class CreateIncidenciaHandler
         cmd.input.registrationOrigin?.trim() || 'dispatch_entry',
     });
     const saved = await this.repo.saveIncidencia(row);
+
+    if (resolved !== undefined) {
+      await this.locationGeom.write('incidencias', saved.id, resolved);
+    }
+
     const full = await this.repo.findIncidenciaById(saved.id);
-    return mapIncidencia(full!);
+    return attachLocationGeometry(
+      this.locationGeom,
+      'incidencias',
+      mapIncidencia(full!),
+    );
   }
 }

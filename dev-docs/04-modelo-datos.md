@@ -560,7 +560,9 @@ Siguen el mismo estilo de FK y multimedia:
 | Módulo | Tablas núcleo | Enlace a cartera |
 |--------|---------------|------------------|
 | `territory` | `operation_area_types`, `operation_areas` (polygon; ver [12](./12-areas-operacion.md)); visitas GPS → subtareas (posterior) | opcional a task |
-| `operational-cases` | `incident_types`, `operation_types`, `incidencias`, `requerimientos`, `field_operations` (ver [13](./13-flujo-operativo.md)) | `area_id` opcional |
+| `operational-cases` | `incident_types`, `operation_types`, `incidencias`, `requerimientos`, `field_operations` (ver [13](./13-flujo-operativo.md)); `location_geom` geography (Point/LineString/Polygon) + `lat`/`lng` sync en Inc/Req | `area_id` opcional |
+| `documents` | `document_types` — catálogo global (decreto, contrato, informe, …); altas UI con folio `DTY`; UI `/document-types` | consumo futuro en contratos / uploads |
+| `preventive-patrols` | `preventive_patrols` — ficha PPV-01 en `payload` jsonb; folio `PPV`; UI `/rondas-preventivas` | — |
 | `assets` | cámaras, radios, EPP, puntos SUBDERE + Point | opcional a task |
 | `contracts` | `contractors`, `contracts`, `contract_periods`, `contract_period_documents` (MVP ITS; ver [09](./09-contratos-its.md)) | `project_id` opcional (p. ej. PRJ-13) |
 | `staff` | `staff`, `staff_requirement_checks` (MVP; ver [10](./10-personal-staff.md)) | `task_assignees.staff_id` |

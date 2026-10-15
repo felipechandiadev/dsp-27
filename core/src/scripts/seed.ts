@@ -51,6 +51,8 @@ class SeedCodeAllocator {
     REQ: 0,
     OPE: 0,
     ITY: 0,
+    DTY: 0,
+    PPV: 0,
   };
 
   constructor(readonly year: number) {}
@@ -121,6 +123,20 @@ class SeedCodeAllocator {
       `SELECT code FROM incident_types WHERE deleted_at IS NULL`,
     );
     for (const row of incidentTypeRows) this.observe('ITY', row.code);
+
+    const documentTypeRows = await AppDataSource.query<{ code: string }[]>(
+      `SELECT code FROM document_types WHERE deleted_at IS NULL`,
+    );
+    for (const row of documentTypeRows) this.observe('DTY', row.code);
+
+    try {
+      const ppvRows = await AppDataSource.query<{ code: string }[]>(
+        `SELECT code FROM preventive_patrols WHERE deleted_at IS NULL`,
+      );
+      for (const row of ppvRows) this.observe('PPV', row.code);
+    } catch {
+      /* tabla aún no migrada */
+    }
 
     const incRows = await AppDataSource.query<{ code: string }[]>(
       `SELECT code FROM incidencias WHERE deleted_at IS NULL`,
@@ -278,7 +294,8 @@ async function upsertPerson(
     documentNumber: string;
     firstName: string;
     lastName: string;
-    email: string;
+    email?: string | null;
+    phone?: string | null;
   },
   codes: SeedCodeAllocator,
 ): Promise<Person> {
@@ -291,14 +308,21 @@ async function upsertPerson(
   });
   const code = codes.take('PSN', person?.code);
   if (!person) {
-    person = repo.create({ ...data, code });
-  } else {
-    Object.assign(person, {
+    person = repo.create({
+      documentType: data.documentType,
+      documentNumber: data.documentNumber,
       firstName: data.firstName,
       lastName: data.lastName,
-      email: data.email,
+      email: data.email ?? null,
+      phone: data.phone ?? null,
       code,
     });
+  } else {
+    person.firstName = data.firstName;
+    person.lastName = data.lastName;
+    person.code = code;
+    if (data.email !== undefined) person.email = data.email ?? null;
+    if (data.phone !== undefined) person.phone = data.phone ?? null;
   }
   return repo.save(person);
 }
@@ -1140,7 +1164,6 @@ async function seed() {
 
   const staffRepo = AppDataSource.getRepository(StaffMember);
   const checkRepo = AppDataSource.getRepository(StaffRequirementCheck);
-  const personRepo = AppDataSource.getRepository(Person);
   const userRepo = AppDataSource.getRepository(User);
   const seededStaffCodes: string[] = [];
   let inspectorStaff: StaffMember | null = null;
@@ -1204,78 +1227,123 @@ async function seed() {
     }
   }
 
-  // Expediente sin cuenta de usuario (RUT distinto de humo/admin users)
-  const orphanDoc = '99.111.222-3';
-  let orphanPerson = await personRepo.findOne({
-    where: { documentNumber: orphanDoc },
-  });
-  // Migrar legado P-ORPH / RUT anterior del seed
-  if (!orphanPerson) {
-    orphanPerson = await personRepo.findOne({
-      where: { documentNumber: '99.888.777-6', firstName: 'Camila' },
-    });
-  }
-  const orphanPersonCode = codes.take('PSN', orphanPerson?.code);
-  if (!orphanPerson) {
-    orphanPerson = personRepo.create({
-      documentType: 'RUT',
-      documentNumber: orphanDoc,
-      firstName: 'Camila',
-      lastName: 'Sin Cuenta',
-      email: 'camila.sincuenta@dsp.local',
-      code: orphanPersonCode,
-    });
-  } else {
-    orphanPerson.documentNumber = orphanDoc;
-    orphanPerson.firstName = 'Camila';
-    orphanPerson.lastName = 'Sin Cuenta';
-    orphanPerson.email = 'camila.sincuenta@dsp.local';
-    orphanPerson.code = orphanPersonCode;
-  }
-  orphanPerson = await personRepo.save(orphanPerson);
+  // Personal afecto (contrata, sin cuenta de usuario).
+  const rosterSeeds: Array<{
+    firstName: string;
+    lastName: string;
+    documentNumber: string;
+    phone: string;
+  }> = [
+    {
+      firstName: 'Victor',
+      lastName: 'Soto Ramírez',
+      documentNumber: '11.802.542-3',
+      phone: '920301917',
+    },
+    {
+      firstName: 'Francisco',
+      lastName: 'Rojar Orellana',
+      documentNumber: '13.828.365-8',
+      phone: '973450386',
+    },
+    {
+      firstName: 'Jorge',
+      lastName: 'Flores Merino',
+      documentNumber: '13.860.336-9',
+      phone: '934456729',
+    },
+    {
+      firstName: 'Exequiel',
+      lastName: 'Matus Cid',
+      documentNumber: '14.036.990-K',
+      phone: '956214015',
+    },
+    {
+      firstName: 'Rodrigo',
+      lastName: 'Benavides Hernandez',
+      documentNumber: '17.689.073-8',
+      phone: '963156607',
+    },
+    {
+      firstName: 'Diego',
+      lastName: 'Lillo Ramírez',
+      documentNumber: '18.877.917-4',
+      phone: '999758986',
+    },
+    {
+      firstName: 'Henry',
+      lastName: 'Rosales Villagra',
+      documentNumber: '19.894.293-6',
+      phone: '971355395',
+    },
+    {
+      firstName: 'Hector',
+      lastName: 'Salas Salas',
+      documentNumber: '19.127.821-6',
+      phone: '934020924',
+    },
+    {
+      firstName: 'Miryam',
+      lastName: 'Cofre Ferrada',
+      documentNumber: '15.157.910-8',
+      phone: '953358260',
+    },
+  ];
 
-  let orphanStaff = await staffRepo.findOne({
-    where: { personaId: orphanPerson.id },
-  });
-  if (!orphanStaff) {
-    orphanStaff = await staffRepo.findOne({ where: { code: 'STF-ORPH' } });
-  }
-  const orphanStaffCode = codes.take('PER', orphanStaff?.code);
-  if (!orphanStaff) {
-    orphanStaff = staffRepo.create({
-      code: orphanStaffCode,
-      personaId: orphanPerson.id,
-      unit: 'operaciones',
-      ds97Profile: 'fiscalizador',
-      inspectorQualityStatus: 'none',
-      appointmentAt: '2026-10-01',
-      priorToLaw: false,
-      employeeNumber: 'DSP-NEW-01',
-      workEmail: null,
-      status: 'active',
-    });
-  }
-  orphanStaff.code = orphanStaffCode;
-  orphanStaff.personaId = orphanPerson.id;
-  orphanStaff.unit = 'operaciones';
-  orphanStaff.ds97Profile = 'fiscalizador';
-  orphanStaff.status = 'active';
-  orphanStaff = await staffRepo.save(orphanStaff);
-  for (const requirementCode of art12Checklist()) {
-    let check = await checkRepo.findOne({
-      where: { staffId: orphanStaff.id, requirementCode },
-    });
-    if (!check) {
-      check = checkRepo.create({
-        staffId: orphanStaff.id,
-        requirementCode,
-        status: 'missing',
-        notes: null,
+  for (const [index, row] of rosterSeeds.entries()) {
+    const person = await upsertPerson(
+      {
+        documentType: 'RUT',
+        documentNumber: row.documentNumber,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        email: null,
+        phone: row.phone,
+      },
+      codes,
+    );
+
+    let staff = await staffRepo.findOne({ where: { personaId: person.id } });
+    const folio = codes.take('PER', staff?.code);
+    if (!staff) {
+      staff = staffRepo.create({
+        code: folio,
+        personaId: person.id,
+        unit: 'operaciones',
+        ds97Profile: 'fiscalizador',
+        inspectorQualityStatus: 'none',
+        appointmentAt: null,
+        priorToLaw: false,
+        employeeNumber: `DSP-CTR-${String(index + 1).padStart(2, '0')}`,
+        workEmail: null,
+        status: 'active',
       });
-      await checkRepo.save(check);
+    } else {
+      staff.code = folio;
     }
+    staff.unit = 'operaciones';
+    staff.ds97Profile = 'fiscalizador';
+    // Prefijo CTR = régimen CONTRATA (sin columna employment_regime aún).
+    staff.employeeNumber = `DSP-CTR-${String(index + 1).padStart(2, '0')}`;
+    staff.status = 'active';
+    staff = await staffRepo.save(staff);
+
+    for (const requirementCode of art12Checklist()) {
+      let check = await checkRepo.findOne({
+        where: { staffId: staff.id, requirementCode },
+      });
+      if (!check) {
+        check = checkRepo.create({
+          staffId: staff.id,
+          requirementCode,
+          status: 'missing',
+          notes: null,
+        });
+        await checkRepo.save(check);
+      }
+    }
+    seededStaffCodes.push(staff.code);
   }
-  seededStaffCodes.push(orphanStaff.code);
 
   console.log(
     `[seed] staff ${seededStaffCodes.length} fichas (${seededStaffCodes.join(', ')})`,
@@ -1498,6 +1566,39 @@ async function seed() {
   }
   console.log(
     `[seed] operation_areas sectores: ${seededAreaCodes.join(', ')}`,
+  );
+
+  // Catálogo tipos de documentos (códigos semánticos; altas UI usan folio DTY)
+  const documentTypeDefs = [
+    { code: 'decreto', name: 'Decreto', sortOrder: 10, description: 'Decreto municipal u otra autoridad' },
+    { code: 'contrato', name: 'Contrato', sortOrder: 20, description: 'Instrumento contractual' },
+    { code: 'informe', name: 'Informe', sortOrder: 30, description: 'Informe general' },
+    { code: 'acta', name: 'Acta', sortOrder: 40, description: 'Acta de reunión o visita' },
+    { code: 'factura', name: 'Factura', sortOrder: 50, description: 'Documento de cobro' },
+    { code: 'resolucion', name: 'Resolución', sortOrder: 60, description: 'Resolución administrativa' },
+    { code: 'asistencia', name: 'Asistencia', sortOrder: 70, description: 'Planilla o registro de asistencia' },
+    { code: 'informe_servicio', name: 'Informe de servicio', sortOrder: 80, description: 'Informe de servicio contratado' },
+    { code: 'acta_visita', name: 'Acta de visita', sortOrder: 90, description: 'Acta de visita en terreno' },
+  ];
+  for (const def of documentTypeDefs) {
+    const existing = await AppDataSource.query<Array<{ id: string }>>(
+      `SELECT id FROM document_types WHERE code = $1 AND deleted_at IS NULL LIMIT 1`,
+      [def.code],
+    );
+    if (existing[0]) {
+      await AppDataSource.query(
+        `UPDATE document_types SET name = $2, description = $3, sort_order = $4, status = 'active', updated_at = now() WHERE id = $1`,
+        [existing[0].id, def.name, def.description, def.sortOrder],
+      );
+    } else {
+      await AppDataSource.query(
+        `INSERT INTO document_types (code, name, description, sort_order, status) VALUES ($1, $2, $3, $4, 'active')`,
+        [def.code, def.name, def.description, def.sortOrder],
+      );
+    }
+  }
+  console.log(
+    `[seed] document_types: ${documentTypeDefs.map((d) => d.code).join(', ')}`,
   );
 
   // Flujo operativo: catálogos + casos demo
