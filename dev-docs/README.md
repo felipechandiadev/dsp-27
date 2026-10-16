@@ -21,6 +21,8 @@ La app es el sistema de trabajo de la Dirección de Seguridad Pública de Parral
 13. [Flujo operativo](./13-flujo-operativo.md) — incidencias, requerimientos, operaciones (bandeja).
 14. [Documentos](./14-documentos.md) — hub Documentos (Redactar · Biblioteca · Normativa · Tipos), BetterOffice DOCX, `creation_mode`.
 
+Capacidades **aún no integradas** (hoja de evolución Ley 21.802 y omnicanal): [`docs/pending-integration/`](../docs/pending-integration/).
+
 Fuente de contenido del plan: `/Users/felipe/Desktop/contratos/seguridad-2027/` (libro Vivliostyle Cap. 1 y 3).
 
 ## Fuentes
