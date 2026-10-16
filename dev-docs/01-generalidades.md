@@ -24,7 +24,7 @@ La numeración de cartera es la del libro: **PRJ-1 a PRJ-3 y PRJ-5 a PRJ-16** (n
 |---------|----------|--------|
 | Tablero | O1–O4, cartera, hitos críticos, alertas abiertas | Resumen ejecutivo |
 | Plan / Estrategia | Misión, visión (si existe), O1–O4, versión del instrumento | Capítulos 0 y 3 |
-| Normas | Catálogo de leyes/DS, PDF adjunto, análisis, obligaciones → cartera | Capítulo 1 · anexo 7.1 |
+| Documentos | Hub: informes Word-in-browser (BetterOffice DOCX), normativa Cap. 1, tipos | Cap. 1 · archivo DSP |
 | Diagnóstico | Capacidades: cámaras, radios, EPP, vehículos, contratos, bitácora | Capítulo 2 |
 | Cartera | Ficha de cada PRJ y TAR | Capítulo 4 |
 | Presupuesto | Rubro y brecha por ítem. El monto entra cuando SECPLAN lo entregue | Capítulo 5 |
@@ -32,7 +32,7 @@ La numeración de cartera es la del libro: **PRJ-1 a PRJ-3 y PRJ-5 a PRJ-16** (n
 | Personal y nómina | Expediente, calidad de inspector/a, nómina trimestral | TAR-3, arts. 12°, 15° y 16° |
 | Capacitaciones | Cursos, aprobación, reloj de 1 y 2 años | Arts. 13°, 49°–51° |
 | Multimedia | Oficios, facturas, actas, especificaciones, folletos, fotos de terreno | Archivo de la Dirección |
-| Tipos de documentos | Catálogo maestro (`/document-types`): decreto, contrato, informe, acta… | Reutilizado por otras secciones |
+| Tipos de documentos | Catálogo maestro (`/documents/types`): decreto, contrato, informe, acta… | Dentro del hub Documentos |
 | ITS | Contratos vigentes: SLA, incidencias, actas, informes | Guardias, parquímetros, PRJ-13 |
 | Licitaciones | Especificación técnica, bases, llamado, adjudicación, recepción | Ley 19.886; PRJ con compra |
 | Prevención | Sectores, rondas puerta a puerta, instrumento, difusión | PRJ-14, PRJ-15, PRJ-16 |
@@ -65,13 +65,13 @@ Todo usuario **es** una persona (`persona_id` obligatorio). Todo funcionario **e
 
 El instrumento anual guarda la **misión** del Cap. 3.1 y, cuando exista, la **visión**. Los **O1–O4** son fichas (por qué, verificación, fuera de alcance), no solo un código.
 
-La sección **Normas** cataloga el marco del Cap. 1: cada norma tiene tipo, número/rótulo y título, puede llevar el **PDF oficial** (`multimedia_assets` → `legal_norm`), un **análisis** de la Dirección y **obligaciones** que se vinculan a objetivos y a proyectos (matriz obligación → acción). La UI de adjuntos (`EntityAttachments`) se reutiliza en otras fichas documentales.
+La sección **Documentos** agrupa el archivo de la Dirección: **Redactar** (tipos `composed` con BetterOffice → DOCX en `multimedia_assets` + `managed_documents`), **Biblioteca**, **normativa** Cap. 1 (módulo legal: PDF oficial en `multimedia_assets` → `legal_norm`, análisis y obligaciones) y el catálogo de **tipos** (`creation_mode`). Detalle en [14-documentos.md](./14-documentos.md). La UI de adjuntos (`EntityAttachments`) se reutiliza en fichas con PDF; subida para tipos `attachment` queda como siguiente paso.
 
 ## Seguimiento, fechas, notas y objetivos
 
 El avance se sigue en tres niveles: **proyecto → tarea → subtarea**.
 
-En cada tarea y subtarea hay siempre: **fecha de inicio y de término**, **notas de trabajo** (hilo), **adjuntos** y un **objetivo operativo** (`objective_text`). El proyecto se enlaza a uno o más O; la tarea puede no tener O si no tiene subtareas, pero **si tiene subtareas debe declarar al menos un O**. Las subtareas heredan la trazabilidad del padre.
+En cada tarea y subtarea hay siempre: **fecha de inicio y de término**, **notas de trabajo** (hilo), **adjuntos** y un **objetivo operativo** (`objective_text`). Proyectos, tareas y subtareas pueden vincularse de forma independiente a uno o varios Objetivos Estratégicos (O), cada uno con su propia N:M (`project_strategic_objectives`, `task_strategic_objectives`, `subtask_strategic_objectives`).
 
 Tareas y subtareas pueden llevar GPS. Las visitas puerta a puerta son subtareas geolocalizadas de PRJ-14.
 

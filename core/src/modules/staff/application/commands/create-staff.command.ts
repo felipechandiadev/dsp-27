@@ -7,6 +7,13 @@ export type CreateStaffInput = {
   lastName?: string;
   email?: string;
   phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  maritalStatus?: string;
+  gender?: string;
+  nationality?: string;
+  profession?: string;
   ds97Profile?: string | null;
   appointmentAt?: string | null;
   priorToLaw?: boolean;

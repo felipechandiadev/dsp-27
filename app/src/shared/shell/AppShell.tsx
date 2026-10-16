@@ -12,19 +12,43 @@ import { UserAccountDialog } from '@/features/auth/ui/user-account-dialog';
 
 const COLLAPSE_KEY = 'dsp-sidebar-collapsed';
 
+function readCollapsedPreference(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem(COLLAPSE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function persistCollapsedPreference(collapsed: boolean) {
+  try {
+    localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0');
+    if (collapsed) {
+      document.documentElement.dataset.sidebarCollapsed = '1';
+    } else {
+      delete document.documentElement.dataset.sidebarCollapsed;
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  // Always start expanded on SSR + first client paint to match HTML; restore from
+  // localStorage after mount (width already applied via html[data-sidebar-collapsed]).
   const [collapsed, setCollapsed] = useState(false);
+  const [sidebarReady, setSidebarReady] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const pathname = usePathname();
   const { data: session } = useSession();
 
   useEffect(() => {
-    try {
-      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === '1');
-    } catch {
-      /* ignore */
-    }
+    const saved = readCollapsedPreference();
+    setCollapsed(saved);
+    persistCollapsedPreference(saved);
+    setSidebarReady(true);
   }, []);
 
   function close() {
@@ -34,11 +58,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   function toggleCollapsed() {
     setCollapsed((prev) => {
       const next = !prev;
-      try {
-        localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0');
-      } catch {
-        /* ignore */
-      }
+      persistCollapsedPreference(next);
       return next;
     });
   }
@@ -84,7 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="dsp-body">
         <aside
-          className={`dsp-sidebar${open ? ' is-open' : ''}${collapsed ? ' is-collapsed' : ''}`}
+          className={`dsp-sidebar${open ? ' is-open' : ''}${collapsed ? ' is-collapsed' : ''}${sidebarReady ? ' is-sidebar-ready' : ''}`}
           aria-label="Navegación principal"
         >
           <div className="dsp-sidebar__head">

@@ -4,11 +4,16 @@ import {
   DeleteDateColumn,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { StrategicObjective } from '@modules/plan/domain/strategic-objective.entity';
 import { Project } from './project.entity';
+import { Subtask } from './subtask.entity';
 
 @Entity({ name: 'tasks' })
 export class Task {
@@ -48,6 +53,20 @@ export class Task {
 
   @Column({ name: 'sort_order', type: 'int', default: 0 })
   sortOrder: number;
+
+  @ManyToMany(() => StrategicObjective)
+  @JoinTable({
+    name: 'task_strategic_objectives',
+    joinColumn: { name: 'task_id', referencedColumnName: 'id' },
+    inverseJoinColumn: {
+      name: 'strategic_objective_id',
+      referencedColumnName: 'id',
+    },
+  })
+  strategicObjectives: StrategicObjective[];
+
+  @OneToMany(() => Subtask, (s) => s.task)
+  subtasks: Subtask[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

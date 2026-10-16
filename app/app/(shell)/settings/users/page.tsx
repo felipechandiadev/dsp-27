@@ -1,12 +1,13 @@
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
-import { Alert } from '@felipechandiadev/ui';
+import { Alert, NextNavProvider } from '@felipechandiadev/ui';
 import { authOptions } from '@/lib/auth/auth-options';
 import { coreFetch } from '@/lib/api/core-fetch';
 import { canAdminUsers } from '@/shared/auth/user-roles';
 import {
   filterBySearch,
   parseListQuery,
+  searchParamsToQuery,
   type ListSearchParams,
 } from '@/shared/ui/list-query';
 import { UsersAdminCollection } from '@/features/users/ui/UsersAdminCollection';
@@ -27,6 +28,7 @@ export default async function SettingsUsersPage({
 
   const params = await searchParams;
   const { search } = parseListQuery(params);
+  const query = searchParamsToQuery(params);
   const { ok, status, data } = await coreFetch<AdminUserRow[]>(
     '/api/users',
     session.user.accessToken,
@@ -56,6 +58,8 @@ export default async function SettingsUsersPage({
   ]);
 
   return (
-    <UsersAdminCollection rows={filtered} canManage />
+    <NextNavProvider search={query}>
+      <UsersAdminCollection rows={filtered} canManage />
+    </NextNavProvider>
   );
 }

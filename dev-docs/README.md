@@ -19,6 +19,7 @@ La app es el sistema de trabajo de la Dirección de Seguridad Pública de Parral
 11. [Códigos de registro](./11-codigos-registro.md) — folio `TTT` + año + correlativo (p. ej. `PRY26000001`).
 12. [Áreas de operación](./12-areas-operacion.md) — tipos administrables + polígonos PostGIS / Leaflet.
 13. [Flujo operativo](./13-flujo-operativo.md) — incidencias, requerimientos, operaciones (bandeja).
+14. [Documentos](./14-documentos.md) — hub Documentos (Redactar · Biblioteca · Normativa · Tipos), BetterOffice DOCX, `creation_mode`.
 
 Fuente de contenido del plan: `/Users/felipe/Desktop/contratos/seguridad-2027/` (libro Vivliostyle Cap. 1 y 3).
 

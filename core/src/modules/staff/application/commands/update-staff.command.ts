@@ -8,6 +8,15 @@ export type UpdateStaffInput = {
   workEmail?: string | null;
   status?: string;
   forceGrant?: boolean;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  maritalStatus?: string | null;
+  gender?: string | null;
+  nationality?: string | null;
+  profession?: string | null;
 };
 
 export class UpdateStaffCommand {

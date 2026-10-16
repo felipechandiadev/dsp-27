@@ -60,4 +60,49 @@ export class UpdateStaffDto {
   @IsOptional()
   @IsIn(['active', 'on_leave', 'terminated'])
   status?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  email?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  phone?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  address?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  city?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  state?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  maritalStatus?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  gender?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nationality?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  profession?: string | null;
 }

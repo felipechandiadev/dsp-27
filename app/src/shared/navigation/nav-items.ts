@@ -2,7 +2,6 @@ import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard,
   Compass,
-  BookOpen,
   Scale,
   FolderKanban,
   ListTodo,
@@ -42,8 +41,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: '/plan', label: 'Plan / Estrategia', icon: Compass },
       { href: '/projects', label: 'Proyectos', icon: FolderKanban },
       { href: '/tasks', label: 'Tareas', icon: ListTodo },
-      { href: '/legal', label: 'Normas', icon: BookOpen },
-      { href: '/document-types', label: 'Tipos de documentos', icon: Files },
+      { href: '/documents', label: 'Documentos', icon: Files },
       { href: '/calendar', label: 'Calendario', icon: CalendarDays },
       { href: '/mail', label: 'Correo', icon: Mail },
       { href: '/contracts', label: 'Contratos', icon: FileText },

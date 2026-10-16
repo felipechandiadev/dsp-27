@@ -10,6 +10,7 @@ export const RECORD_CODE_PREFIXES = [
   'OPE',
   'ITY',
   'DTY',
+  'DOC',
   'PPV',
 ] as const;
 

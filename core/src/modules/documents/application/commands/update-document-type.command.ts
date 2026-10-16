@@ -7,6 +7,7 @@ export class UpdateDocumentTypeCommand {
       description?: string | null;
       sortOrder?: number;
       status?: string;
+      creationMode?: string;
     },
   ) {}
 }

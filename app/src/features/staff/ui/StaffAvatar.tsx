@@ -5,18 +5,32 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { apiBase } from '@/lib/api/core-fetch';
 
+type AvatarSize = 'sm' | 'md' | 'lg';
+
 type Props = {
   code: string;
   avatarAssetId: string | null;
   initials: string;
-  canEdit: boolean;
+  canEdit?: boolean;
+  size?: AvatarSize;
+  className?: string;
+  alt?: string;
+};
+
+const SIZE_CLASS: Record<AvatarSize, string> = {
+  sm: 'dsp-staff-avatar--sm',
+  md: 'dsp-staff-avatar--md',
+  lg: 'dsp-staff-avatar--lg',
 };
 
 export function StaffAvatar({
   code,
   avatarAssetId,
   initials,
-  canEdit,
+  canEdit = false,
+  size = 'md',
+  className = '',
+  alt = '',
 }: Props) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -88,20 +102,28 @@ export function StaffAvatar({
     }
   }
 
+  const circle = (
+    <div
+      className={`dsp-staff-avatar ${SIZE_CLASS[size]} ${className}`.trim()}
+      aria-label="Avatar"
+    >
+      {blobUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={blobUrl} alt={alt} className="dsp-staff-avatar__img" />
+      ) : (
+        <span className="dsp-staff-avatar__initials">{initials}</span>
+      )}
+    </div>
+  );
+
+  if (!canEdit) {
+    return circle;
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <div
-        className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-muted)] flex items-center justify-center text-lg font-semibold"
-        aria-label="Avatar"
-      >
-        {blobUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={blobUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <span>{initials}</span>
-        )}
-      </div>
-      {canEdit && token ? (
+      {circle}
+      {token ? (
         <label className="text-sm cursor-pointer underline text-[var(--color-muted-foreground)]">
           {busy ? 'Subiendo…' : 'Cambiar foto'}
           <input

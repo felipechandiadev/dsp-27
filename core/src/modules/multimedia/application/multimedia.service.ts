@@ -21,7 +21,11 @@ const IMAGE_MIMES = new Set([
   'image/gif',
 ]);
 
-const DOCUMENT_MIMES = new Set(['application/pdf']);
+const DOCUMENT_MIMES = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
+]);
 
 const IMAGE_MAX_BYTES = 8 * 1024 * 1024;
 const DOCUMENT_MAX_BYTES = 20 * 1024 * 1024;
@@ -36,6 +40,7 @@ export const MULTIMEDIA_ENTITY_TYPES = [
   'subtask',
   'person',
   'plan_instrument',
+  'managed_document',
 ] as const;
 
 @Injectable()
@@ -81,6 +86,33 @@ export class MultimediaService {
     });
   }
 
+  /** Latest image per entityId (first by sortOrder, then createdAt DESC). */
+  async findLatestImagesByEntityIds(
+    entityType: string,
+    entityIds: string[],
+  ): Promise<Map<string, MultimediaAsset>> {
+    this.assertEntityType(entityType);
+    const map = new Map<string, MultimediaAsset>();
+    if (entityIds.length === 0) return map;
+
+    const rows = await this.assets
+      .createQueryBuilder('a')
+      .where('a.entity_type = :entityType', { entityType })
+      .andWhere('a.entity_id IN (:...entityIds)', { entityIds })
+      .andWhere('a.kind = :kind', { kind: 'image' })
+      .andWhere('a.deleted_at IS NULL')
+      .orderBy('a.sort_order', 'ASC')
+      .addOrderBy('a.created_at', 'DESC')
+      .getMany();
+
+    for (const row of rows) {
+      if (!map.has(row.entityId)) {
+        map.set(row.entityId, row);
+      }
+    }
+    return map;
+  }
+
   async findLatestDocument(
     entityType: string,
     entityId: string,
@@ -122,7 +154,7 @@ export class MultimediaService {
     }
     if (input.kind === 'document' && !DOCUMENT_MIMES.has(input.mimeType)) {
       throw new BadRequestException(
-        'MIME de documento no permitido (solo PDF)',
+        'MIME de documento no permitido (PDF o DOCX)',
       );
     }
     if (input.buffer.length === 0) {

@@ -5,6 +5,7 @@ export class CreateDocumentTypeCommand {
       name: string;
       description?: string;
       sortOrder?: number;
+      creationMode?: string;
     },
   ) {}
 }

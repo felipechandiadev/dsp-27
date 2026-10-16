@@ -10,6 +10,7 @@ import {
   type DataGridColumn,
 } from '@felipechandiadev/ui';
 import { useListCardsView } from '@/shared/ui/use-list-cards-view';
+import { StaffAvatar } from './StaffAvatar';
 
 export type StaffRow = {
   id: string;
@@ -19,6 +20,7 @@ export type StaffRow = {
   inspectorQualityStatus: string;
   status: string;
   readyForGrant?: boolean;
+  avatarAssetId?: string | null;
   person: {
     id: string;
     firstName: string;
@@ -36,6 +38,13 @@ type Props = {
 };
 
 const CARD_COLS = 4;
+
+function initialsOf(row: StaffRow): string {
+  const a = (row.person?.firstName?.[0] ?? '').toUpperCase();
+  const b = (row.person?.lastName?.[0] ?? '').toUpperCase();
+  if (a || b) return `${a}${b}` || row.code.slice(0, 2);
+  return row.code.slice(0, 2).toUpperCase();
+}
 
 export function StaffDataGrid({ rows, totalRows, limit = 25 }: Props) {
   const router = useRouter();
@@ -94,41 +103,52 @@ export function StaffDataGrid({ rows, totalRows, limit = 25 }: Props) {
         contentGridClassName="dsp-portfolio-card-grid"
         contentGridItemsAlign="start"
         data-test-id="staff-collection-grid"
-        contentItems={rows.map((s) => (
-          <Card
-            key={s.id}
-            fillHeight
-            className="dsp-portfolio-card cursor-pointer"
-            onClick={() => router.push(`/staff/${s.code}`)}
-            title={
-              <Link
-                href={`/staff/${s.code}`}
-                className="hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {s.code}
-              </Link>
-            }
-            headerEnd={
-              <Badge variant="secondary">{s.inspectorQualityStatus}</Badge>
-            }
-            subtitle={
-              s.person
-                ? `${s.person.firstName} ${s.person.lastName}`
-                : 'Sin persona'
-            }
-          >
-            <p className="text-sm text-[var(--color-muted-foreground)] m-0">
-              {s.unit}
-              {s.ds97Profile ? ` · ${s.ds97Profile}` : ''}
-            </p>
-            {s.person ? (
-              <p className="text-xs text-[var(--color-muted-foreground)] m-0 mt-auto pt-2">
-                {s.person.documentNumber}
+        contentItems={rows.map((s) => {
+          const name = s.person
+            ? `${s.person.firstName} ${s.person.lastName}`
+            : 'Sin persona';
+          return (
+            <Card
+              key={s.id}
+              fillHeight
+              className="dsp-portfolio-card dsp-staff-card cursor-pointer"
+              onClick={() => router.push(`/staff/${s.code}`)}
+              title={
+                <Link
+                  href={`/staff/${s.code}`}
+                  className="hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {s.code}
+                </Link>
+              }
+              headerEnd={
+                <Badge variant="secondary">{s.inspectorQualityStatus}</Badge>
+              }
+              subtitle={name}
+            >
+              <div className="dsp-staff-card__avatar">
+                <StaffAvatar
+                  code={s.code}
+                  avatarAssetId={s.avatarAssetId ?? null}
+                  initials={initialsOf(s)}
+                  alt={name}
+                  size="lg"
+                  canEdit={false}
+                />
+              </div>
+              <p className="text-sm text-[var(--color-muted-foreground)] m-0">
+                {s.unit}
+                {s.ds97Profile ? ` · ${s.ds97Profile}` : ''}
               </p>
-            ) : null}
-          </Card>
-        ))}
+              {s.person ? (
+                <p className="text-xs text-[var(--color-muted-foreground)] m-0 mt-auto pt-2">
+                  {s.person.documentNumber}
+                </p>
+              ) : null}
+            </Card>
+          );
+        })}
       />
     );
   }

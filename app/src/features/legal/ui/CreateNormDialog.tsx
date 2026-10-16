@@ -103,7 +103,7 @@ export function CreateNormDialog({ open, onClose }: Props) {
       }
       handleClose();
       if (data?.code) {
-        router.push(`/legal/${encodeURIComponent(data.code)}`);
+        router.push(`/documents/norms/${encodeURIComponent(data.code)}`);
       } else {
         router.refresh();
       }

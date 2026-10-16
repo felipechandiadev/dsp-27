@@ -30,4 +30,9 @@ export class UpdateDocumentTypeDto {
   @IsOptional()
   @IsIn(['active', 'inactive'])
   status?: string;
+
+  @ApiPropertyOptional({ enum: ['composed', 'attachment'] })
+  @IsOptional()
+  @IsIn(['composed', 'attachment'])
+  creationMode?: string;
 }

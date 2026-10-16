@@ -34,10 +34,12 @@ export function NormsCollection({ rows, role }: Props) {
           key={n.id}
           fillHeight
           className="cursor-pointer"
-          onClick={() => router.push(`/legal/${encodeURIComponent(n.code)}`)}
+          onClick={() =>
+            router.push(`/documents/norms/${encodeURIComponent(n.code)}`)
+          }
           title={
             <Link
-              href={`/legal/${encodeURIComponent(n.code)}`}
+              href={`/documents/norms/${encodeURIComponent(n.code)}`}
               className="hover:underline"
               onClick={(e) => e.stopPropagation()}
             >

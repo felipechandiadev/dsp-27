@@ -36,6 +36,24 @@ export class Person {
   @Column({ type: 'varchar', nullable: true })
   address: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  city: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  state: string | null;
+
+  @Column({ name: 'marital_status', type: 'varchar', nullable: true })
+  maritalStatus: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  gender: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  nationality: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  profession: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 

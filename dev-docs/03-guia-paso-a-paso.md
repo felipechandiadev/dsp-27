@@ -24,7 +24,7 @@ Quedan fijas para no rediscutirlas al scaffoldear:
 - Seguimiento: `projects` → `tasks` → `subtasks` (máximo 3 niveles), fechas inicio/término, notas y adjuntos siempre en tarea/subtarea, GPS opcional.
 - Plan: `plan_instruments` (misión; visión nullable) + O1–O4 enriquecidos (Cap. 3 del libro).
 - Normas: `legal_norms` + análisis + obligaciones + PDF; ancla Cap. 1 → cartera.
-- Trazabilidad: norma/obligación → O → proyecto → tarea; tarea con subtareas exige al menos un O.
+- Trazabilidad: norma/obligación → O → proyecto / tarea / subtarea (cada nivel con N:M propia opcional).
 - Multimedia polimórfica (`entity_type` + `entity_id`) + `work_notes`; no URLs sueltas.
 - Una municipalidad. Roles de la orgánica objetivo, no multi-tenant.
 - Códigos de cartera del libro: PRJ-1–PRJ-3, PRJ-5–PRJ-16, TAR-1–TAR-3.
@@ -105,8 +105,17 @@ Módulo `legal` + PDF vía `multimedia`.
 - `GET/POST/PATCH /api/legal/norms`, `GET /api/legal/norms/:code` (incluye `pdfAsset`).
 - `POST /api/legal/norms/:code/pdf` — PDF oficial (`entity_type=legal_norm`, `kind=document`, replace).
 - Escritura: roles `direccion` y `administrativo`.
-- UI `/legal` (cards) + `/legal/[code]` (ficha + adjunto); componente reutilizable `EntityAttachments`.
+- UI normativa bajo hub Documentos: `/documents/norms` + `/documents/norms/:code` (redirects desde `/legal`); componente reutilizable `EntityAttachments`.
 - `legal_norm_analyses` / CRUD de obligaciones: fase posterior (listado de obligaciones ya existe).
+
+### Documentos / informes (hub)
+
+- Hub `/documents` (Redactar · Biblioteca · Normativa · Tipos).
+- `document_types.creation_mode` (`composed` \| `attachment`); seed `memo` + modos.
+- Redactar `/documents/compose` → `POST /api/documents/reports`; Biblioteca `/documents/library`.
+- `managed_documents` + folio `DOC`; API `/api/documents/reports`.
+- UI Word-in-browser con BetterOffice (DOCX vía `body_asset_id`). Ver [14-documentos.md](./14-documentos.md).
+- Tipos: `/documents/types` (antes `/document-types`).
 
 **Listo cuando:** listado Cap. 1; detalle con metadatos; PDF subible y legible; `OBL-ORGANICA` enlazable a cartera.
 
@@ -115,11 +124,11 @@ Módulo `legal` + PDF vía `multimedia`.
 Módulo `portfolio`.
 
 - `projects` + N:M a O + `obligation_projects` (vínculo obligación → PRJ).
-- `tasks` / `subtasks` / `task_strategic_objectives` / `work_notes` / assignees / milestones / indicators.
-- Al crear la primera subtarea, exigir ≥1 O en la tarea.
+- `tasks` / `subtasks` / `task_strategic_objectives` / `subtask_strategic_objectives` / `work_notes` / assignees / milestones / indicators.
+- Proyecto, tarea y subtarea vinculan O de forma independiente (sin exigir O en el padre al crear subtareas).
 - Semilla: 15 PRJ + 3 TAR con O del libro; obligaciones del paso 6 enlazadas a sus PRJ.
 
-**Listo cuando:** PRJ-1, PRJ-5, TAR-3 con O; obligación orgánica → PRJ-1; subtarea sin O en la tarea falla 400; nota en el hilo.
+**Listo cuando:** PRJ-1, PRJ-5, TAR-3 con O; obligación orgánica → PRJ-1; subtarea creable sin O en la tarea; O de subtarea visible en plan; nota en el hilo.
 
 ## Paso 8 — Multimedia y notas (driver local)
 
@@ -204,7 +213,7 @@ Pasar `STORAGE_DRIVER=r2` y rellenar `R2_*` ([05-envs.md](./05-envs.md)). El esq
 - No aplanar proyecto/tarea/subtarea en una sola tabla genérica.
 - No poner contraseñas ni roles de sistema en `persons`.
 - No poner email en `users` ni hacer login por correo (usar `username`).
-- No crear subtareas bajo una tarea sin objetivo estratégico.
+- No exigir O en la tarea padre para crear subtareas (cada nivel gestiona su propia N:M a O).
 - No sustituir el hilo de notas por un único campo texto editable.
 - No pegar el articulado completo de una ley en `summary` (PDF + análisis).
 - No tratar el PDF Vivliostyle como fuente de verdad en runtime.

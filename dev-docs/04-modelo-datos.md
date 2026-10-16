@@ -207,14 +207,15 @@ Seed: O1–O4 del libro bajo el plan 2027. No se borran mientras el plan esté a
 |-------|----------|-----|
 | `project_strategic_objectives` | `project_id`, `strategic_objective_id` | Un proyecto puede aportar a varios O (PRJ-14 → O2, O3, O4) |
 | `task_strategic_objectives` | `task_id`, `strategic_objective_id` | Vínculo opcional de la tarea a uno o más O |
+| `subtask_strategic_objectives` | `subtask_id`, `strategic_objective_id` | Vínculo opcional de la subtarea a uno o más O |
 
-**Subtareas:** heredan la trazabilidad del padre (sin N:M propia en MVP).
+### Reglas de negocio (objetivos estratégicos)
 
-### Reglas de negocio (objetivos en tareas)
+Proyectos, Tareas y Subtareas pueden vincularse de forma independiente a uno o varios Objetivos Estratégicos (O), sin depender de la presencia de objetivos en sus entidades padre.
 
-1. Una **tarea sin subtareas** puede existir **sin** filas en `task_strategic_objectives`.
-2. Al **crear la primera subtarea**, la tarea **debe** tener al menos un O → si no, 400.
-3. Quitar el último vínculo O de una tarea con subtareas activas → 400.
+1. Una **tarea** puede existir **sin** filas en `task_strategic_objectives`, tenga o no subtareas.
+2. Una **subtarea** puede crearse sin O en la tarea padre; sus O van en `subtask_strategic_objectives`.
+3. Quitar todos los O de una tarea con subtareas activas está permitido.
 4. Enlazar un O que el proyecto no declara: permitido en MVP con advertencia en UI.
 5. El **proyecto** del libro siempre declara al menos un O (seed y alta).
 
@@ -223,9 +224,9 @@ Cadena de trazabilidad estratégica:
 ```text
 plan_instrument
   → strategic_objective (O#)
-      → project(s)
-          → task(s)  [O obligatorio si hay subtareas]
-              → subtask(s)  [heredan]
+      → project(s)     [N:M propia]
+      → task(s)        [N:M propia, opcional]
+      → subtask(s)     [N:M propia, opcional]
 ```
 
 ## 3. Marco normativo — normas, análisis y obligaciones
@@ -332,7 +333,7 @@ Capacidades **siempre** disponibles en tarea y subtarea (no son módulos aparte 
 | Notas de trabajo | `work_notes` con el mismo vínculo polimórfico |
 | Fecha de inicio y de término | `starts_on`, `ends_on` |
 | Objetivo operativo (texto) | `objective_text` — qué se busca con ese trabajo |
-| Objetivos estratégicos | N:M vía `task_strategic_objectives` (ver §2–3); subtarea hereda |
+| Objetivos estratégicos | N:M vía `task_strategic_objectives` / `subtask_strategic_objectives` (ver §2); independientes del padre |
 
 ### `projects`
 
@@ -444,7 +445,7 @@ En MVP, notas son obligatorias como **capacidad** (endpoints siempre expuestos),
 
 El tablero muestra estado + % derivado + ventana `starts_on`/`ends_on`. No se exige meta monetaria.
 
-Lectura por objetivo estratégico: proyectos y tareas enlazados a ese O, con % agregado (promedio de proyectos del O, o de tareas del O según la vista).
+Lectura por objetivo estratégico: proyectos, tareas y subtareas con vínculo explícito a ese O; `progressPercent` = promedio de (done → 100, resto → 0) sobre esa unión.
 
 ### `task_assignees` (vinculaciones)
 
@@ -523,6 +524,7 @@ Prohibido: columnas `local_path` y `r2_url` en paralelo; entidades `DocumentLoca
 | `staff` | staff.id | Credencial |
 | `staff_requirement` | fila de requisito art. 12° | Certificados |
 | `staff_certification` | fila de capacitación | Diploma curso |
+| `managed_document` | managed_documents.id | Adjunto de informe editable |
 | `contract` | contracts.id | Contrato, factura |
 | `contract_incident` | incidencia ITS | Acta de incumplimiento |
 | `procurement` | procurement.id | Especificación, bases |
@@ -561,7 +563,7 @@ Siguen el mismo estilo de FK y multimedia:
 |--------|---------------|------------------|
 | `territory` | `operation_area_types`, `operation_areas` (polygon; ver [12](./12-areas-operacion.md)); visitas GPS → subtareas (posterior) | opcional a task |
 | `operational-cases` | `incident_types`, `operation_types`, `incidencias`, `requerimientos`, `field_operations` (ver [13](./13-flujo-operativo.md)); `location_geom` geography (Point/LineString/Polygon) + `lat`/`lng` sync en Inc/Req | `area_id` opcional |
-| `documents` | `document_types` — catálogo global (decreto, contrato, informe, …); altas UI con folio `DTY`; UI `/document-types` | consumo futuro en contratos / uploads |
+| `documents` | `document_types` (folio `DTY`, `creation_mode`) + `managed_documents` (DOCX canónico en `body_asset_id` / multimedia, folio `DOC`); hub UI `/documents` — ver [14](./14-documentos.md) | tipo opcional en docs; contratos siguen con checklist propio |
 | `preventive-patrols` | `preventive_patrols` — ficha PPV-01 en `payload` jsonb; folio `PPV`; UI `/rondas-preventivas` | — |
 | `assets` | cámaras, radios, EPP, puntos SUBDERE + Point | opcional a task |
 | `contracts` | `contractors`, `contracts`, `contract_periods`, `contract_period_documents` (MVP ITS; ver [09](./09-contratos-its.md)) | `project_id` opcional (p. ej. PRJ-13) |
@@ -578,7 +580,7 @@ Siguen el mismo estilo de FK y multimedia:
 3. `plan_instruments` (2027, misión) + `strategic_objectives` enriquecidos (O1–O4).
 4. `legal_norms` + seed Cap. 1 + `legal_norm_analyses` + `legal_obligations` (+ N:M a O cuando existan).
 5. `projects` + `project_strategic_objectives` + `obligation_projects` + seed cartera.
-6. `tasks`, `subtasks`, `task_strategic_objectives`, `task_assignees`, `milestones`, `indicators`, `work_notes`.
+6. `tasks`, `subtasks`, `task_strategic_objectives`, `subtask_strategic_objectives`, `task_assignees`, `milestones`, `indicators`, `work_notes`.
 7. `multimedia_assets` (incl. PDF de normas).
 8. `notifications`, `notification_deliveries`, `notification_outbox` (ver [07-notificaciones](./07-notificaciones.md)).
 9. Resto (territory, assets, contracts, procurement, training).

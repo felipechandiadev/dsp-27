@@ -53,6 +53,13 @@ export class GetStaffHandler implements IQueryHandler<GetStaffQuery> {
             documentNumber: s.person.documentNumber,
             email: s.person.email,
             phone: s.person.phone,
+            address: s.person.address,
+            city: s.person.city,
+            state: s.person.state,
+            maritalStatus: s.person.maritalStatus,
+            gender: s.person.gender,
+            nationality: s.person.nationality,
+            profession: s.person.profession,
           }
         : null,
       requirements: requirements.map((r) => ({

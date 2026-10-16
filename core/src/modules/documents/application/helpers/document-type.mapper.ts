@@ -8,6 +8,7 @@ export function mapDocumentType(t: DocumentType) {
     description: t.description,
     sortOrder: t.sortOrder,
     status: t.status,
+    creationMode: t.creationMode,
     createdAt: t.createdAt,
   };
 }

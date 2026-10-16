@@ -63,7 +63,7 @@ export function NormDetailClient({ norm, canWrite }: Props) {
         </Card>
 
         <p className="m-0 text-sm">
-          <Link href="/legal" className="underline">
+          <Link href="/documents/norms" className="underline">
             Volver a Normas
           </Link>
         </p>

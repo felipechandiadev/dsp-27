@@ -4,3 +4,5 @@ node_modules/
 .env*.local
 *.tsbuildinfo
 next-env.d.ts
+# Generado por npm run sync:fonts (TTF de @betteroffice/fonts)
+public/betteroffice-fonts/

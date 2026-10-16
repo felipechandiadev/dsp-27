@@ -431,11 +431,16 @@ main.dsp-shell {
   background: var(--color-surface);
   border-right: 1px solid var(--color-border);
   transform: translateX(-105%);
-  transition: transform 0.2s ease, width 0.22s ease;
+  /* Width transition only after hydrate — avoids open/close jump on reload */
+  transition: transform 0.2s ease;
   display: flex;
   flex-direction: column;
   padding: 0.75rem 0 1rem;
   overflow: hidden;
+}
+
+.dsp-sidebar.is-sidebar-ready {
+  transition: transform 0.2s ease, width 0.22s ease;
 }
 
 .dsp-sidebar.is-open {
@@ -450,6 +455,22 @@ main.dsp-shell {
 .dsp-sidebar.is-collapsed .dsp-nav {
   overflow-x: hidden;
   overflow-y: auto;
+  padding-inline: 0.35rem;
+}
+
+.dsp-sidebar.is-collapsed .dsp-sidebar__head {
+  justify-content: center;
+  padding-inline: 0.35rem;
+}
+
+.dsp-sidebar.is-collapsed .dsp-sidebar__head-actions {
+  width: 100%;
+  justify-content: center;
+}
+
+.dsp-sidebar.is-collapsed .dsp-sidebar__foot {
+  align-items: center;
+  padding-inline: 0.35rem;
 }
 
 .dsp-sidebar__overlay {
@@ -584,6 +605,8 @@ main.dsp-shell {
   max-width: 100%;
   overflow: hidden;
   gap: 0;
+  justify-content: center;
+  padding: 0.5rem;
 }
 
 /* Activo en colapsado: rail + icono, sin fondo */
@@ -679,12 +702,13 @@ main.dsp-shell {
 
 .dsp-sidebar__logout-icon {
   display: none;
-  /* Misma sangría que los iconos del nav */
-  margin-inline-start: 0.15rem;
 }
 
 .dsp-sidebar.is-collapsed .dsp-sidebar__logout-icon {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin: 0;
 }
 
 .dsp-main {
@@ -731,6 +755,67 @@ main.dsp-shell {
   aspect-ratio: 4 / 5;
   max-height: 15.5rem;
   overflow: hidden;
+}
+
+/* Personal: avatar circular (StaffAvatar) */
+.dsp-staff-card.dsp-portfolio-card {
+  aspect-ratio: auto;
+  max-height: none;
+  min-height: 0;
+}
+
+.dsp-staff-card__avatar {
+  display: flex;
+  justify-content: center;
+  margin: 0.15rem 0 0.75rem;
+}
+
+.dsp-staff-avatar {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border, #c5d0d8);
+  background: color-mix(in srgb, var(--color-muted, #e8eef2) 80%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 650;
+  color: var(--color-muted-foreground, #4a5864);
+}
+
+.dsp-staff-avatar--sm {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 0.8rem;
+}
+
+.dsp-staff-avatar--md {
+  width: 4rem;
+  height: 4rem;
+  font-size: 1.1rem;
+}
+
+.dsp-staff-avatar--lg {
+  width: 5.5rem;
+  height: 5.5rem;
+  font-size: 1.35rem;
+}
+
+.dsp-staff-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dsp-staff-avatar__initials {
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.dsp-staff-card .fs-card__content {
+  padding-top: 0.35rem;
 }
 
 .dsp-portfolio-card .fs-card__title {
@@ -1184,6 +1269,38 @@ main.dsp-shell {
     flex-shrink: 0;
   }
 
+  /* Preferencia de localStorage antes de React (script en layout) */
+  html[data-sidebar-collapsed='1'] .dsp-sidebar {
+    width: var(--app-sidebar-width-collapsed);
+    overflow: hidden;
+  }
+
+  html[data-sidebar-collapsed='1'] .dsp-sidebar .dsp-nav__label,
+  html[data-sidebar-collapsed='1'] .dsp-sidebar .dsp-nav__section,
+  html[data-sidebar-collapsed='1'] .dsp-sidebar .dsp-sidebar__title,
+  html[data-sidebar-collapsed='1'] .dsp-sidebar .dsp-sidebar__user,
+  html[data-sidebar-collapsed='1'] .dsp-sidebar .dsp-sidebar__logout-full {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  html[data-sidebar-collapsed='1'] .dsp-sidebar .dsp-nav__link {
+    justify-content: center;
+    gap: 0;
+    padding: 0.5rem;
+  }
+
+  html[data-sidebar-collapsed='1'] .dsp-sidebar .dsp-sidebar__logout-icon {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+
   .dsp-sidebar__overlay,
   .dsp-topbar__menu,
   .dsp-sidebar__close {
@@ -1197,4 +1314,19 @@ main.dsp-shell {
   .dsp-main {
     padding: 1.25rem 1.5rem 2rem;
   }
+}
+
+/* —— BetterOffice DOCX (Word-in-browser) —— */
+.dsp-docx-shell {
+  min-height: 70vh;
+  height: min(78vh, 56rem);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--dsp-chrome-bg, #eef2f5);
+}
+
+.dsp-docx-shell .betteroffice-editor,
+.dsp-docx-shell [data-betteroffice-editor] {
+  height: 100%;
 }

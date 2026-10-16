@@ -25,6 +25,12 @@ export class CreateDocumentTypeHandler
     if (!name) {
       throw new BadRequestException('name es requerido');
     }
+    const creationMode = cmd.input.creationMode ?? 'attachment';
+    if (creationMode !== 'composed' && creationMode !== 'attachment') {
+      throw new BadRequestException(
+        'creationMode debe ser composed o attachment',
+      );
+    }
     const code = await this.recordCodes.next('DTY');
     const row = this.repo.create({
       code,
@@ -32,6 +38,7 @@ export class CreateDocumentTypeHandler
       description: cmd.input.description?.trim() || null,
       sortOrder: cmd.input.sortOrder ?? 0,
       status: 'active',
+      creationMode,
     });
     const saved = await this.repo.save(row);
     return mapDocumentType(saved);

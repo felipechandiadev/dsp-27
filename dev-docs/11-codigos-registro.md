@@ -31,6 +31,7 @@ Ejemplo: **`PRY26000001`** — proyecto, año 2026, correlativo 1.
 | `OPE` | Operación de campo (despacho; no confundir con `AOP`) |
 | `ITY` | Tipo de incidencia (catálogo) |
 | `DTY` | Tipo de documento (catálogo; altas UI; el seed usa códigos semánticos) |
+| `DOC` | Documento gestionado / informe editable (`managed_documents`) |
 | `PPV` | Ficha de patrullaje preventivo vecinal |
 
 El **seed** y las **altas por API** usan el mismo formato. El seed asigna correlativos por prefijo/año y alinea `record_code_sequences` con `ensureAtLeast`, para que el siguiente `next()` no choque.

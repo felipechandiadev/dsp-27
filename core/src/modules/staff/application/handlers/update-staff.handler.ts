@@ -83,6 +83,46 @@ export class UpdateStaffHandler
       staff.inspectorQualityStatus = input.inspectorQualityStatus;
     }
 
+    const personFields: Array<
+      keyof Pick<
+        typeof input,
+        | 'email'
+        | 'phone'
+        | 'address'
+        | 'city'
+        | 'state'
+        | 'maritalStatus'
+        | 'gender'
+        | 'nationality'
+        | 'profession'
+      >
+    > = [
+      'email',
+      'phone',
+      'address',
+      'city',
+      'state',
+      'maritalStatus',
+      'gender',
+      'nationality',
+      'profession',
+    ];
+    const hasPersonPatch = personFields.some((k) => input[k] !== undefined);
+    if (hasPersonPatch) {
+      const person =
+        staff.person ?? (await this.repo.findPersonById(staff.personaId));
+      if (!person) {
+        throw new NotFoundException('Persona del expediente no encontrada');
+      }
+      for (const key of personFields) {
+        if (input[key] !== undefined) {
+          person[key] = input[key] ?? null;
+        }
+      }
+      await this.repo.savePerson(person);
+      staff.person = person;
+    }
+
     const saved = await this.repo.saveStaff(staff);
     return {
       id: saved.id,

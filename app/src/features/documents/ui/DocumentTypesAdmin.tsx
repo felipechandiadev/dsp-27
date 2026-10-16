@@ -15,7 +15,10 @@ import {
 } from '@felipechandiadev/ui';
 import { apiBase } from '@/lib/api/core-fetch';
 import { canWriteDocumentTypes } from '@/shared/auth/user-roles';
-import type { DocumentTypeRow } from './document-types';
+import {
+  creationModeLabel,
+  type DocumentTypeRow,
+} from './document-types';
 
 type Props = {
   initialTypes: DocumentTypeRow[];
@@ -24,6 +27,11 @@ type Props = {
 const STATUS_OPTIONS = [
   { id: 'active', label: 'Activo' },
   { id: 'inactive', label: 'Inactivo' },
+];
+
+const CREATION_MODE_OPTIONS = [
+  { id: 'composed', label: 'En sistema' },
+  { id: 'attachment', label: 'Adjunto' },
 ];
 
 function apiError(data: unknown, fallback: string): string {
@@ -50,12 +58,16 @@ export function DocumentTypesAdmin({ initialTypes }: Props) {
   const [description, setDescription] = useState('');
   const [sortOrder, setSortOrder] = useState('0');
   const [status, setStatus] = useState<string | number | null>('active');
+  const [creationMode, setCreationMode] = useState<string | number | null>(
+    'attachment',
+  );
 
   function resetForm() {
     setName('');
     setDescription('');
     setSortOrder('0');
     setStatus('active');
+    setCreationMode('attachment');
     setDialogError(null);
   }
 
@@ -70,6 +82,7 @@ export function DocumentTypesAdmin({ initialTypes }: Props) {
     setDescription(t.description ?? '');
     setSortOrder(String(t.sortOrder));
     setStatus(t.status);
+    setCreationMode(t.creationMode ?? 'attachment');
     setDialogError(null);
   }
 
@@ -95,6 +108,7 @@ export function DocumentTypesAdmin({ initialTypes }: Props) {
           name: trimmed,
           description: description.trim() || undefined,
           sortOrder: Number(sortOrder) || 0,
+          creationMode: creationMode ? String(creationMode) : 'attachment',
         }),
       });
       const data = await res.json().catch(() => null);
@@ -144,6 +158,7 @@ export function DocumentTypesAdmin({ initialTypes }: Props) {
             description: description.trim() || null,
             sortOrder: Number(sortOrder) || 0,
             status: status ? String(status) : 'active',
+            creationMode: creationMode ? String(creationMode) : 'attachment',
           }),
         },
       );
@@ -191,7 +206,7 @@ export function DocumentTypesAdmin({ initialTypes }: Props) {
           />
         ) : null}
         <p style={{ margin: 0, opacity: 0.85 }}>
-          Catálogo de tipos usados en contratos, normas y otras secciones.
+          Catálogo de tipos: «En sistema» (Tiptap) o «Adjunto» (archivo).
         </p>
       </div>
 
@@ -218,11 +233,20 @@ export function DocumentTypesAdmin({ initialTypes }: Props) {
               key={t.id}
               title={t.code}
               headerEnd={
-                <Badge
-                  variant={t.status === 'active' ? 'success' : 'secondary'}
-                >
-                  {t.status === 'active' ? 'Activo' : 'Inactivo'}
-                </Badge>
+                <div className="flex flex-wrap items-center gap-1">
+                  <Badge
+                    variant={
+                      t.creationMode === 'composed' ? 'info' : 'secondary'
+                    }
+                  >
+                    {creationModeLabel(t.creationMode)}
+                  </Badge>
+                  <Badge
+                    variant={t.status === 'active' ? 'success' : 'secondary'}
+                  >
+                    {t.status === 'active' ? 'Activo' : 'Inactivo'}
+                  </Badge>
+                </div>
               }
               content={
                 <div style={{ display: 'grid', gap: '0.35rem' }}>
@@ -287,6 +311,12 @@ export function DocumentTypesAdmin({ initialTypes }: Props) {
             onChange={(e) => setSortOrder(e.target.value)}
             type="number"
           />
+          <Select
+            label="Creación"
+            options={CREATION_MODE_OPTIONS}
+            value={creationMode}
+            onChange={(id) => setCreationMode(id)}
+          />
           <div className="flex justify-end gap-2">
             <Button
               type="button"
@@ -330,6 +360,12 @@ export function DocumentTypesAdmin({ initialTypes }: Props) {
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
             type="number"
+          />
+          <Select
+            label="Creación"
+            options={CREATION_MODE_OPTIONS}
+            value={creationMode}
+            onChange={(id) => setCreationMode(id)}
           />
           <Select
             label="Estado"

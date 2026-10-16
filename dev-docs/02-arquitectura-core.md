@@ -100,18 +100,18 @@ plan_instruments (misión, visión?)
 legal_norms (+ PDF) → analyses → obligations ──┼──→ projects
                                                └──→ O
 projects (PRJ-* / TAR-*)
-  └── tasks              starts_on/ends_on · notes · multimedia · O?
-        └── subtasks     starts_on/ends_on · notes · multimedia · GPS? · heredan O
+  └── tasks              starts_on/ends_on · notes · multimedia · O? (N:M propia)
+        └── subtasks     starts_on/ends_on · notes · multimedia · GPS? · O? (N:M propia)
 ```
 
 - **Plan:** `plan_instruments` guarda misión (Cap. 3.1), visión opcional, criterios y resultados esperados.
 - **O1–O4:** fichas enriquecidas (por qué, verificación, fuera de alcance) bajo el plan.
 - **Normas:** catálogo Cap. 1 + PDF + análisis de la Dirección + obligaciones que anclan PRJ/O.
-- **Proyecto / tarea / subtarea:** igual que antes; O obligatorio en la tarea si tiene subtareas.
+- **Proyecto / tarea / subtarea:** cada nivel puede vincular O de forma independiente (`project_strategic_objectives`, `task_strategic_objectives`, `subtask_strategic_objectives`).
 
 Vinculaciones de personas: `task_assignees`. Notas: `work_notes`. Adjuntos: `multimedia_assets` (también `legal_norm`).
 
-Avance: % derivado de hijos. Trazabilidad completa: norma → obligación → O → proyecto → tarea → subtarea (ver [modelo de datos](./04-modelo-datos.md) §2–3).
+Avance: % derivado de hijos. Trazabilidad: norma → obligación → O, y O → proyecto / tarea / subtarea con vínculos explícitos (ver [modelo de datos](./04-modelo-datos.md) §2–3).
 
 ## Módulos
 
@@ -150,7 +150,7 @@ Recursos de la primera API usable:
 | `GET /api/health` | Proceso y PostGIS |
 | `GET /api/plan` | Instrumento activo: misión, visión, versión |
 | `PATCH /api/plan` | Actualizar misión / visión / textos Cap. 3 |
-| `GET /api/plan/objectives` | O1–O4 enriquecidos, proyectos/tareas, % agregado |
+| `GET /api/plan/objectives` | O1–O4 enriquecidos + proyectos/tareas/subtareas vinculados + `progressPercent` |
 | `GET /api/legal/norms` | Catálogo del marco normativo |
 | `GET /api/legal/norms/:id` | Norma + análisis publicados + obligaciones |
 | `POST /api/legal/norms/:id/analyses` | Crear/actualizar análisis |
@@ -164,9 +164,12 @@ Recursos de la primera API usable:
 | `GET /api/projects/:id/tasks` | Tareas del proyecto |
 | `POST /api/projects/:id/tasks` | Tarea (fechas, objective_text, location opcional) |
 | `PATCH /api/tasks/:id` | Estado, fechas, objective_text |
-| `PUT /api/tasks/:id/objectives` | Vínculos a O (obligatorio si ya hay subtareas) |
+| `PUT /api/tasks/:id/objectives` | Reemplazar set de O de la tarea (puede quedar vacío) |
 | `GET /api/tasks/:id/subtasks` | Subtareas |
-| `POST /api/tasks/:id/subtasks` | Subtarea; falla si la tarea no tiene O |
+| `POST /api/tasks/:id/subtasks` | Subtarea; `strategicObjectiveIds` opcional (no exige O en el padre) |
+| `GET /api/subtasks/:id` | Detalle de subtarea |
+| `PATCH /api/subtasks/:id` | Campos de ficha (+ O opcionales) |
+| `PUT /api/subtasks/:id/objectives` | Reemplazar set de O de la subtarea |
 | `POST /api/projects/tasks/:taskId/assignees` | Vincular persona (+ notifica `task_assigned`) |
 | `GET /api/projects/tasks/:taskId/assignees` | Asignaciones activas |
 | `GET /api/notes` | Lista por `entityType` + `entityId` |

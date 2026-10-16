@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Project } from '@modules/portfolio/domain/project.entity';
+import { Task } from '@modules/portfolio/domain/task.entity';
+import { Subtask } from '@modules/portfolio/domain/subtask.entity';
 import { PlanInstrument } from './domain/plan-instrument.entity';
 import { StrategicObjective } from './domain/strategic-objective.entity';
 import { PLAN_REPOSITORY } from './application/ports/plan.repository.port';
@@ -12,7 +15,13 @@ import { GetObjectivesHandler } from './application/handlers/get-objectives.hand
 @Module({
   imports: [
     CqrsModule,
-    TypeOrmModule.forFeature([PlanInstrument, StrategicObjective]),
+    TypeOrmModule.forFeature([
+      PlanInstrument,
+      StrategicObjective,
+      Project,
+      Task,
+      Subtask,
+    ]),
   ],
   controllers: [PlanController],
   providers: [

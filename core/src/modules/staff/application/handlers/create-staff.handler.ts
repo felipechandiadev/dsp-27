@@ -71,12 +71,32 @@ export class CreateStaffHandler
           lastName: input.lastName,
           email: input.email ?? null,
           phone: input.phone ?? null,
+          address: input.address ?? null,
+          city: input.city ?? null,
+          state: input.state ?? null,
+          maritalStatus: input.maritalStatus ?? null,
+          gender: input.gender ?? null,
+          nationality: input.nationality ?? null,
+          profession: input.profession ?? null,
         });
       } else {
         person.firstName = input.firstName;
         person.lastName = input.lastName;
         if (input.email !== undefined) person.email = input.email ?? null;
         if (input.phone !== undefined) person.phone = input.phone ?? null;
+        if (input.address !== undefined) person.address = input.address ?? null;
+        if (input.city !== undefined) person.city = input.city ?? null;
+        if (input.state !== undefined) person.state = input.state ?? null;
+        if (input.maritalStatus !== undefined) {
+          person.maritalStatus = input.maritalStatus ?? null;
+        }
+        if (input.gender !== undefined) person.gender = input.gender ?? null;
+        if (input.nationality !== undefined) {
+          person.nationality = input.nationality ?? null;
+        }
+        if (input.profession !== undefined) {
+          person.profession = input.profession ?? null;
+        }
       }
       person = await this.repo.savePerson(person);
     }

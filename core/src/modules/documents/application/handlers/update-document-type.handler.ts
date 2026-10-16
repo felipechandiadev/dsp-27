@@ -13,6 +13,7 @@ import { assertDocumentTypesWriteRole } from '../helpers/document-types-access';
 import { mapDocumentType } from '../helpers/document-type.mapper';
 
 const STATUSES = new Set(['active', 'inactive']);
+const CREATION_MODES = new Set(['composed', 'attachment']);
 
 @CommandHandler(UpdateDocumentTypeCommand)
 export class UpdateDocumentTypeHandler
@@ -49,6 +50,14 @@ export class UpdateDocumentTypeHandler
         throw new BadRequestException('status debe ser active o inactive');
       }
       row.status = input.status;
+    }
+    if (input.creationMode !== undefined) {
+      if (!CREATION_MODES.has(input.creationMode)) {
+        throw new BadRequestException(
+          'creationMode debe ser composed o attachment',
+        );
+      }
+      row.creationMode = input.creationMode;
     }
     const saved = await this.repo.save(row);
     return mapDocumentType(saved);

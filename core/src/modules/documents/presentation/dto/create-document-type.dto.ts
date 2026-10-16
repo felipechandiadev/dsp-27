@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 export class CreateDocumentTypeDto {
   @ApiProperty()
@@ -17,4 +24,9 @@ export class CreateDocumentTypeDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  @ApiPropertyOptional({ enum: ['composed', 'attachment'] })
+  @IsOptional()
+  @IsIn(['composed', 'attachment'])
+  creationMode?: string;
 }

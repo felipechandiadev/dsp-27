@@ -41,6 +41,7 @@ export class DocumentTypesController {
         name: dto.name,
         description: dto.description,
         sortOrder: dto.sortOrder,
+        creationMode: dto.creationMode,
       }),
     );
   }

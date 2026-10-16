@@ -9,6 +9,7 @@ import { LegalNormAnalysis } from '@modules/legal/domain/legal-norm-analysis.ent
 import { LegalObligation } from '@modules/legal/domain/legal-obligation.entity';
 import { Project } from '@modules/portfolio/domain/project.entity';
 import { Task } from '@modules/portfolio/domain/task.entity';
+import { Subtask } from '@modules/portfolio/domain/subtask.entity';
 import { WorkNote } from '@modules/portfolio/domain/work-note.entity';
 import { UserOauthAccount } from '@modules/integrations/microsoft/domain/user-oauth-account.entity';
 import { Notification } from '@modules/notifications/domain/notification.entity';
@@ -31,6 +32,7 @@ import { Incidencia } from '@modules/operational-cases/domain/incidencia.entity'
 import { Requerimiento } from '@modules/operational-cases/domain/requerimiento.entity';
 import { FieldOperation } from '@modules/operational-cases/domain/field-operation.entity';
 import { DocumentType } from '@modules/documents/domain/document-type.entity';
+import { ManagedDocument } from '@modules/documents/domain/managed-document.entity';
 import { PreventivePatrol } from '@modules/preventive-patrols/domain/preventive-patrol.entity';
 
 export const entities = [
@@ -43,6 +45,7 @@ export const entities = [
   LegalObligation,
   Project,
   Task,
+  Subtask,
   WorkNote,
   UserOauthAccount,
   Notification,
@@ -65,6 +68,7 @@ export const entities = [
   Requerimiento,
   FieldOperation,
   DocumentType,
+  ManagedDocument,
   PreventivePatrol,
 ];
 

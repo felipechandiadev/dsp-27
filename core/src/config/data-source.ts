@@ -18,7 +18,11 @@ import { OperationalCases1760000000012 } from '../migrations/1760000000012-Opera
 import { DocumentTypes1760000000013 } from '../migrations/1760000000013-DocumentTypes';
 import { PreventivePatrols1760000000014 } from '../migrations/1760000000014-PreventivePatrols';
 import { CaseLocationGeom1760000000015 } from '../migrations/1760000000015-CaseLocationGeom';
-
+import { PersonProfileFields1760000000016 } from '../migrations/1760000000016-PersonProfileFields';
+import { ManagedDocuments1760000000017 } from '../migrations/1760000000017-ManagedDocuments';
+import { DocumentTypeCreationMode1760000000018 } from '../migrations/1760000000018-DocumentTypeCreationMode';
+import { SubtaskStrategicObjectives1760000000019 } from '../migrations/1760000000019-SubtaskStrategicObjectives';
+import { ManagedDocumentBodyAsset1760000000020 } from '../migrations/1760000000020-ManagedDocumentBodyAsset';
 
 const root = path.resolve(__dirname, '../..');
 dotenv.config({ path: path.join(root, '.env') });
@@ -49,6 +53,11 @@ export const AppDataSource = new DataSource({
     DocumentTypes1760000000013,
     PreventivePatrols1760000000014,
     CaseLocationGeom1760000000015,
+    PersonProfileFields1760000000016,
+    ManagedDocuments1760000000017,
+    DocumentTypeCreationMode1760000000018,
+    SubtaskStrategicObjectives1760000000019,
+    ManagedDocumentBodyAsset1760000000020,
   ],
   migrationsTableName: 'typeorm_migrations',
   logging: process.env.DB_LOGGING === 'true',

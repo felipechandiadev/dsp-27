@@ -27,6 +27,10 @@ export class DocumentType {
   @Column({ type: 'varchar', default: 'active' })
   status: string;
 
+  /** composed = redactado en app (Tiptap); attachment = archivo subido */
+  @Column({ name: 'creation_mode', type: 'varchar', default: 'attachment' })
+  creationMode: string;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
